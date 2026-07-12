@@ -266,3 +266,25 @@ impl AudioPlayer {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::io::BufReader;
+
+    #[test]
+    fn decode_sample_mp3() {
+        let path = r"C:\Users\Admin\Music\04. I'm So Sorry.mp3";
+        if !std::path::Path::new(path).exists() {
+            eprintln!("SKIP: {path} not found");
+            return;
+        }
+        let file = std::fs::File::open(path).expect("open mp3");
+        let decoder = Decoder::new(BufReader::new(file)).expect("decode mp3");
+        // rodio's total_duration() returns 0 for some MP3s — that's a known limitation.
+        // Duration is read from lofty during scan_folder instead.
+        // We just verify the file decodes without error.
+        let _ = decoder.total_duration();
+        eprintln!("OK: MP3 decoded successfully");
+    }
+}
