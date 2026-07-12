@@ -1,9 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { api } from "./lib/api";
-import { useAudio } from "./hooks/useAudio";
+import { usePlaylist } from "./hooks/usePlaylist";
 import { useMode } from "./hooks/useMode";
-import { useLibrary } from "./hooks/useLibrary";
 import { useShortcuts } from "./hooks/useShortcuts";
 import { AppLayout } from "./components/layout/AppLayout";
 import { NormalView } from "./components/modes/normal/NormalView";
@@ -11,38 +10,78 @@ import { FlowView } from "./components/modes/flow/FlowView";
 import { ZenView } from "./components/modes/zen/ZenView";
 
 function App() {
-  const audio = useAudio();
+  const playlist = usePlaylist();
   const { mode, setMode, cycleMode } = useMode();
-  const library = useLibrary();
   const [musicFolder, setMusicFolder] = useState("");
 
   useEffect(() => {
     api.getConfig().then((c) => {
       setMusicFolder(c.music_folder);
       api.setVolume(c.volume);
-      library.scan(c.music_folder);
+      playlist.loadLibrary(c.music_folder);
     });
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSelectFolder = useCallback(async () => {
     const selected = await open({ directory: true, multiple: false });
     if (typeof selected === "string") {
       setMusicFolder(selected);
-      library.scan(selected);
-      api.setConfig({ music_folder: selected, volume: audio.volume, crossfade_duration: 3 });
+      playlist.loadLibrary(selected);
+      api.setConfig({
+        music_folder: selected,
+        volume: playlist.volume,
+        crossfade_duration: 3,
+      });
     }
-  }, [audio.volume]);
+  }, [playlist.volume, playlist.loadLibrary]);
 
   useShortcuts([
-    { key: "Space", action: audio.toggle, description: "Play/Pause" },
-    { key: "KeyN", alt: true, action: () => setMode("normal"), description: "Normal mode" },
-    { key: "KeyF", alt: true, action: () => setMode("flow"), description: "Flow mode" },
-    { key: "KeyZ", alt: true, action: () => setMode("zen"), description: "Zen mode" },
+    { key: "Space", action: playlist.toggle, description: "Play/Pause" },
+    {
+      key: "KeyN",
+      alt: true,
+      action: () => setMode("normal"),
+      description: "Normal mode",
+    },
+    {
+      key: "KeyF",
+      alt: true,
+      action: () => setMode("flow"),
+      description: "Flow mode",
+    },
+    {
+      key: "KeyZ",
+      alt: true,
+      action: () => setMode("zen"),
+      description: "Zen mode",
+    },
     { key: "Tab", action: cycleMode, description: "Cycle modes" },
-    { key: "ArrowRight", ctrl: true, action: audio.next, description: "Next track" },
-    { key: "ArrowLeft", ctrl: true, action: audio.previous, description: "Previous track" },
-    { key: "ArrowUp", ctrl: true, action: () => audio.setVolume(Math.min(1, audio.volume + 0.05)), description: "Volume up" },
-    { key: "ArrowDown", ctrl: true, action: () => audio.setVolume(Math.max(0, audio.volume - 0.05)), description: "Volume down" },
+    {
+      key: "ArrowRight",
+      ctrl: true,
+      action: playlist.next,
+      description: "Next track",
+    },
+    {
+      key: "ArrowLeft",
+      ctrl: true,
+      action: playlist.previous,
+      description: "Previous track",
+    },
+    {
+      key: "ArrowUp",
+      ctrl: true,
+      action: () =>
+        playlist.setVolume(Math.min(1, playlist.volume + 0.05)),
+      description: "Volume up",
+    },
+    {
+      key: "ArrowDown",
+      ctrl: true,
+      action: () =>
+        playlist.setVolume(Math.max(0, playlist.volume - 0.05)),
+      description: "Volume down",
+    },
     { key: "KeyO", ctrl: true, action: handleSelectFolder, description: "Open folder" },
   ]);
 
@@ -51,16 +90,27 @@ function App() {
       case "flow":
         return (
           <FlowView
-            tracks={library.tracks}
-            currentTrack={audio.currentTrack}
-            playing={audio.playing}
-            onSelect={audio.play}
+            tracks={playlist.tracks}
+            currentTrack={playlist.currentTrack}
+            playing={playlist.playing}
+            onSelect={playlist.playTrack}
           />
         );
       case "zen":
-        return <ZenView currentTrack={audio.currentTrack} playing={audio.playing} />;
+        return (
+          <ZenView
+            currentTrack={playlist.currentTrack}
+            playing={playlist.playing}
+          />
+        );
       default:
-        return <NormalView tracks={library.tracks} currentTrack={audio.currentTrack} onSelect={audio.play} />;
+        return (
+          <NormalView
+            tracks={playlist.tracks}
+            currentTrack={playlist.currentTrack}
+            onSelect={playlist.playTrack}
+          />
+        );
     }
   })();
 
@@ -68,13 +118,17 @@ function App() {
     <AppLayout
       mode={mode}
       onModeChange={setMode}
-      currentTrack={audio.currentTrack}
-      playing={audio.playing}
-      volume={audio.volume}
-      onToggle={audio.toggle}
-      onNext={audio.next}
-      onPrevious={audio.previous}
-      onVolumeChange={audio.setVolume}
+      currentTrack={playlist.currentTrack}
+      playing={playlist.playing}
+      volume={playlist.volume}
+      position={playlist.position}
+      error={playlist.error}
+      onToggle={playlist.toggle}
+      onNext={playlist.next}
+      onPrevious={playlist.previous}
+      onVolumeChange={playlist.setVolume}
+      onSeek={playlist.seek}
+      onClearError={playlist.clearError}
     >
       {mode !== "zen" && (
         <button className="app__folder-btn" onClick={handleSelectFolder}>
