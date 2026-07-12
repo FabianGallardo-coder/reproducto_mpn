@@ -2,7 +2,6 @@ mod audio;
 mod commands;
 mod config;
 mod error;
-mod events;
 mod metadata;
 
 use std::sync::{Arc, Mutex};
@@ -23,7 +22,6 @@ pub struct AppState {
 pub fn run() {
     let result = tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
-        .plugin(tauri_plugin_shell::init())
         .setup(|app| {
             let config_path = app
                 .path()
@@ -76,7 +74,6 @@ pub fn run() {
             commands::audio::get_playlist,
             commands::audio::set_playlist,
             commands::library::scan_folder,
-            commands::library::get_tracks,
             commands::config::get_config,
             commands::config::set_config,
         ])

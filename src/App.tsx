@@ -30,7 +30,6 @@ function App() {
       api.setConfig({
         music_folder: selected,
         volume: playlist.volume,
-        crossfade_duration: 3,
       });
     }
   }, [playlist.volume, playlist.loadLibrary]);

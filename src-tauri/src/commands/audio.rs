@@ -4,7 +4,7 @@ use std::time::Duration;
 use tauri::State;
 
 use crate::AppState;
-use crate::commands::library::TrackInfo;
+use crate::audio::track_info::TrackInfo;
 use crate::error::AppError;
 
 #[tauri::command]

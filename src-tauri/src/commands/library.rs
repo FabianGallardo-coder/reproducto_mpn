@@ -1,18 +1,9 @@
-use serde::{Deserialize, Serialize};
 use walkdir::WalkDir;
 
 use crate::audio::sources::local;
+use crate::audio::track_info::TrackInfo;
 use crate::error::AppError;
 use crate::metadata::id3;
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct TrackInfo {
-    pub path: String,
-    pub title: String,
-    pub artist: String,
-    pub album: String,
-    pub duration: f64,
-}
 
 #[tauri::command]
 pub fn scan_folder(path: String) -> Result<Vec<TrackInfo>, AppError> {
@@ -52,9 +43,4 @@ pub fn scan_folder(path: String) -> Result<Vec<TrackInfo>, AppError> {
     }
 
     Ok(tracks)
-}
-
-#[tauri::command]
-pub fn get_tracks(path: String) -> Result<Vec<TrackInfo>, AppError> {
-    scan_folder(path)
 }

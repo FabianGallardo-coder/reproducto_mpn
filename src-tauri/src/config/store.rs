@@ -29,10 +29,6 @@ impl ConfigStore {
         &self.config
     }
 
-    pub fn get_mut(&mut self) -> &mut AppConfig {
-        &mut self.config
-    }
-
     pub fn set(&mut self, config: AppConfig) -> Result<(), AppError> {
         self.config = config;
         let data = serde_json::to_string_pretty(&self.config)?;

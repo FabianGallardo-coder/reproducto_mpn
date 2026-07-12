@@ -15,7 +15,6 @@ export const api = {
   setPlaylist: (tracks: Track[], index: number) =>
     invoke<void>("set_playlist", { tracks, index }),
   scanFolder: (path: string) => invoke<Track[]>("scan_folder", { path }),
-  getTracks: (path: string) => invoke<Track[]>("get_tracks", { path }),
   getConfig: () => invoke<AppConfig>("get_config"),
   setConfig: (config: AppConfig) => invoke<void>("set_config", { config }),
 };

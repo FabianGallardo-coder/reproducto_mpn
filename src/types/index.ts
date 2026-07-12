@@ -11,7 +11,6 @@ export interface Track {
 export interface AppConfig {
   music_folder: string;
   volume: number;
-  crossfade_duration: number;
 }
 
 export interface PlaybackState {

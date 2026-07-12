@@ -4,7 +4,6 @@ use serde::{Deserialize, Serialize};
 pub struct AppConfig {
     pub music_folder: String,
     pub volume: f32,
-    pub crossfade_duration: f32,
 }
 
 impl Default for AppConfig {
@@ -16,7 +15,6 @@ impl Default for AppConfig {
         Self {
             music_folder,
             volume: 0.8,
-            crossfade_duration: 3.0,
         }
     }
 }

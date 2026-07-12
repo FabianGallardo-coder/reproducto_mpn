@@ -1,9 +1,9 @@
 use std::io::BufReader;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{mpsc, Arc};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
-use rodio::{Decoder, OutputStream, Sink};
+use rodio::{Decoder, OutputStream, Sink, Source};
 use serde::{Deserialize, Serialize};
 
 use crate::error::AppError;
@@ -33,7 +33,23 @@ pub enum AudioEvent {
 
 pub struct AudioPlayer {
     tx: mpsc::Sender<AudioCommand>,
-    state: std::sync::Mutex<PlaybackState>,
+    shared: Arc<SharedState>,
+}
+
+struct SharedState {
+    playing: std::sync::atomic::AtomicBool,
+    volume: AtomicU64,
+    position: AtomicU64,
+    duration: AtomicU64,
+    current_track: std::sync::Mutex<Option<String>>,
+}
+
+fn f64_to_u64(v: f64) -> u64 {
+    v.to_bits()
+}
+
+fn u64_to_f64(v: u64) -> f64 {
+    f64::from_bits(v)
 }
 
 impl AudioPlayer {
@@ -41,6 +57,16 @@ impl AudioPlayer {
         let (cmd_tx, cmd_rx) = mpsc::channel::<AudioCommand>();
         let (event_tx, event_rx) = mpsc::channel::<AudioEvent>();
         let (init_tx, init_rx) = mpsc::channel::<Result<(), String>>();
+
+        let shared = Arc::new(SharedState {
+            playing: std::sync::atomic::AtomicBool::new(false),
+            volume: AtomicU64::new(f64_to_u64(0.8)),
+            position: AtomicU64::new(f64_to_u64(0.0)),
+            duration: AtomicU64::new(f64_to_u64(0.0)),
+            current_track: std::sync::Mutex::new(None),
+        });
+
+        let shared_clone = Arc::clone(&shared);
 
         std::thread::Builder::new()
             .name("audio-engine".into())
@@ -89,38 +115,69 @@ impl AudioPlayer {
                                 }
                             };
 
+                            let dur = source
+                                .total_duration()
+                                .unwrap_or_default()
+                                .as_secs_f64();
+                            shared_clone.duration.store(f64_to_u64(dur), Ordering::Relaxed);
+                            shared_clone.position.store(f64_to_u64(0.0), Ordering::Relaxed);
+
                             sink.stop();
                             sink.append(source);
 
+                            shared_clone
+                                .playing
+                                .store(true, Ordering::Relaxed);
+
+                            let start = Instant::now();
                             let gen = generation.fetch_add(1, Ordering::SeqCst) + 1;
                             let sink_clone = Arc::clone(&sink);
                             let evt = event_tx.clone();
+                            let shared_poll = Arc::clone(&shared_clone);
                             let gen = Arc::new(gen);
 
                             let _ = std::thread::Builder::new()
                                 .name("track-end-poll".into())
                                 .spawn(move || {
                                     loop {
-                                        std::thread::sleep(Duration::from_millis(200));
+                                        std::thread::sleep(Duration::from_millis(250));
+                                        let elapsed = start.elapsed().as_secs_f64();
+                                        shared_poll
+                                            .position
+                                            .store(f64_to_u64(elapsed), Ordering::Relaxed);
                                         if sink_clone.empty() {
                                             let _ = evt.send(AudioEvent::TrackEnded);
                                             break;
                                         }
-                                        let _ = gen; // keep alive
+                                        let _ = gen;
                                     }
                                 })
                                 .map(|_| ())
                                 .map_err(|e| AppError::Audio(format!("Spawn poll: {e}")));
                         }
-                        AudioCommand::Pause => sink.pause(),
-                        AudioCommand::Resume => sink.play(),
+                        AudioCommand::Pause => {
+                            sink.pause();
+                            shared_clone.playing.store(false, Ordering::Relaxed);
+                        }
+                        AudioCommand::Resume => {
+                            sink.play();
+                            shared_clone.playing.store(true, Ordering::Relaxed);
+                        }
                         AudioCommand::Stop => {
                             sink.stop();
                             generation.fetch_add(1, Ordering::SeqCst);
+                            shared_clone.playing.store(false, Ordering::Relaxed);
+                            shared_clone.position.store(f64_to_u64(0.0), Ordering::Relaxed);
                         }
-                        AudioCommand::SetVolume(v) => sink.set_volume(v),
+                        AudioCommand::SetVolume(v) => {
+                            sink.set_volume(v);
+                            shared_clone.volume.store(f64_to_u64(v as f64), Ordering::Relaxed);
+                        }
                         AudioCommand::Seek(pos) => {
                             let _ = sink.try_seek(pos);
+                            shared_clone
+                                .position
+                                .store(f64_to_u64(pos.as_secs_f64()), Ordering::Relaxed);
                         }
                     }
                 }
@@ -134,13 +191,7 @@ impl AudioPlayer {
 
         let player = Self {
             tx: cmd_tx,
-            state: std::sync::Mutex::new(PlaybackState {
-                playing: false,
-                position: 0.0,
-                duration: 0.0,
-                volume: 0.8,
-                current_track: None,
-            }),
+            shared,
         };
 
         Ok((player, event_rx))
@@ -150,52 +201,42 @@ impl AudioPlayer {
         self.tx
             .send(AudioCommand::PlayFile(path.to_string()))
             .map_err(|e| AppError::Audio(e.to_string()))?;
-        if let Ok(mut state) = self.state.lock() {
-            state.playing = true;
-            state.current_track = Some(path.to_string());
-        }
+        *self
+            .shared
+            .current_track
+            .lock()
+            .map_err(|e| AppError::Audio(e.to_string()))? = Some(path.to_string());
         Ok(())
     }
 
     pub fn pause(&self) -> Result<(), AppError> {
         self.tx
             .send(AudioCommand::Pause)
-            .map_err(|e| AppError::Audio(e.to_string()))?;
-        if let Ok(mut state) = self.state.lock() {
-            state.playing = false;
-        }
-        Ok(())
+            .map_err(|e| AppError::Audio(e.to_string()))
     }
 
     pub fn resume(&self) -> Result<(), AppError> {
         self.tx
             .send(AudioCommand::Resume)
-            .map_err(|e| AppError::Audio(e.to_string()))?;
-        if let Ok(mut state) = self.state.lock() {
-            state.playing = true;
-        }
-        Ok(())
+            .map_err(|e| AppError::Audio(e.to_string()))
     }
 
     pub fn stop(&self) -> Result<(), AppError> {
         self.tx
             .send(AudioCommand::Stop)
             .map_err(|e| AppError::Audio(e.to_string()))?;
-        if let Ok(mut state) = self.state.lock() {
-            state.playing = false;
-            state.current_track = None;
-        }
+        *self
+            .shared
+            .current_track
+            .lock()
+            .map_err(|e| AppError::Audio(e.to_string()))? = None;
         Ok(())
     }
 
     pub fn set_volume(&self, volume: f32) -> Result<(), AppError> {
         self.tx
             .send(AudioCommand::SetVolume(volume))
-            .map_err(|e| AppError::Audio(e.to_string()))?;
-        if let Ok(mut state) = self.state.lock() {
-            state.volume = volume;
-        }
-        Ok(())
+            .map_err(|e| AppError::Audio(e.to_string()))
     }
 
     pub fn seek(&self, position: Duration) -> Result<(), AppError> {
@@ -205,15 +246,23 @@ impl AudioPlayer {
     }
 
     pub fn get_state(&self) -> PlaybackState {
-        self.state
+        let playing = self.shared.playing.load(Ordering::Relaxed);
+        let position = u64_to_f64(self.shared.position.load(Ordering::Relaxed));
+        let duration = u64_to_f64(self.shared.duration.load(Ordering::Relaxed));
+        let volume = u64_to_f64(self.shared.volume.load(Ordering::Relaxed)) as f32;
+        let current_track = self
+            .shared
+            .current_track
             .lock()
-            .map(|s| s.clone())
-            .unwrap_or(PlaybackState {
-                playing: false,
-                position: 0.0,
-                duration: 0.0,
-                volume: 0.8,
-                current_track: None,
-            })
+            .ok()
+            .and_then(|t| t.clone());
+
+        PlaybackState {
+            playing,
+            position,
+            duration,
+            volume,
+            current_track,
+        }
     }
 }

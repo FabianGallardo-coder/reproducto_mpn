@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::commands::library::TrackInfo;
+use crate::audio::track_info::TrackInfo;
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct PlaylistManager {
