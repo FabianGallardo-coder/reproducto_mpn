@@ -1,4 +1,4 @@
-import type { Mode, Track } from "../../types";
+import type { Mode, Track, RepeatMode } from "../../types";
 import { Sidebar } from "./Sidebar";
 import { PlayerBar } from "./PlayerBar";
 
@@ -8,6 +8,8 @@ interface Props {
   currentTrack: Track | null;
   playing: boolean;
   volume: number;
+  shuffle: boolean;
+  repeat: RepeatMode;
   positionRef: React.RefObject<number>;
   seekBarRef: React.Ref<HTMLInputElement>;
   error: string | null;
@@ -16,7 +18,10 @@ interface Props {
   onPrevious: () => void;
   onVolumeChange: (v: number) => void;
   onSeek: (position: number) => void;
+  onToggleShuffle: () => void;
+  onCycleRepeat: () => void;
   onClearError: () => void;
+  onSearch?: (query: string) => void;
   children: React.ReactNode;
 }
 
@@ -26,6 +31,8 @@ export function AppLayout({
   currentTrack,
   playing,
   volume,
+  shuffle,
+  repeat,
   positionRef,
   seekBarRef,
   error,
@@ -34,7 +41,10 @@ export function AppLayout({
   onPrevious,
   onVolumeChange,
   onSeek,
+  onToggleShuffle,
+  onCycleRepeat,
   onClearError,
+  onSearch,
   children,
 }: Props) {
   if (mode === "zen") {
@@ -57,7 +67,7 @@ export function AppLayout({
           {error}
         </div>
       )}
-      <Sidebar mode={mode} onModeChange={onModeChange}>
+      <Sidebar mode={mode} onModeChange={onModeChange} onSearch={onSearch}>
         <button className="sidebar__item sidebar__item--active">Library</button>
       </Sidebar>
       <main className="layout__main">{children}</main>
@@ -65,6 +75,8 @@ export function AppLayout({
         currentTrack={currentTrack}
         playing={playing}
         volume={volume}
+        shuffle={shuffle}
+        repeat={repeat}
         positionRef={positionRef}
         seekBarRef={seekBarRef}
         onToggle={onToggle}
@@ -72,6 +84,8 @@ export function AppLayout({
         onPrevious={onPrevious}
         onVolumeChange={onVolumeChange}
         onSeek={onSeek}
+        onToggleShuffle={onToggleShuffle}
+        onCycleRepeat={onCycleRepeat}
       />
     </div>
   );

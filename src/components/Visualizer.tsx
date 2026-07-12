@@ -37,15 +37,37 @@ export function Visualizer({ playing }: Props) {
         const amplitude = Math.sin(phase + i * 0.3) * 0.5 + 0.5;
         const height = amplitude * h * 0.8;
         const hue = (i / barCount) * 60 + 200;
+        const lightness = 40 + amplitude * 20;
 
-        ctx.fillStyle = `hsl(${hue}, 70%, 50%)`;
-        ctx.fillRect(
-          i * barWidth,
-          h - height,
-          barWidth - 1,
-          height,
-        );
+        const grad = ctx.createLinearGradient(0, h - height, 0, h);
+        grad.addColorStop(0, `hsl(${hue}, 80%, ${lightness + 15}%)`);
+        grad.addColorStop(1, `hsl(${hue}, 70%, ${lightness - 10}%)`);
+        ctx.fillStyle = grad;
+
+        const radius = Math.min(barWidth * 0.3, height * 0.2, 4);
+        const x = i * barWidth + 1;
+        const y = h - height;
+        const bw = barWidth - 2;
+        const bh = height;
+
+        ctx.beginPath();
+        ctx.moveTo(x + radius, y);
+        ctx.lineTo(x + bw - radius, y);
+        ctx.quadraticCurveTo(x + bw, y, x + bw, y + radius);
+        ctx.lineTo(x + bw, y + bh);
+        ctx.lineTo(x, y + bh);
+        ctx.lineTo(x, y + radius);
+        ctx.quadraticCurveTo(x, y, x + radius, y);
+        ctx.closePath();
+        ctx.fill();
       }
+
+      // Glow overlay at bottom
+      const glowGrad = ctx.createLinearGradient(0, h * 0.7, 0, h);
+      glowGrad.addColorStop(0, "rgba(74, 158, 255, 0)");
+      glowGrad.addColorStop(1, `rgba(74, 158, 255, ${0.05 + Math.sin(phase * 2) * 0.03})`);
+      ctx.fillStyle = glowGrad;
+      ctx.fillRect(0, h * 0.7, w, h * 0.3);
 
       frameRef.current = requestAnimationFrame(draw);
     };

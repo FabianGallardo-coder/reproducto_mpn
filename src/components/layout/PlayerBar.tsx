@@ -1,10 +1,12 @@
 import { useCallback, useMemo } from "react";
-import type { Track } from "../../types";
+import type { Track, RepeatMode } from "../../types";
 
 interface Props {
   currentTrack: Track | null;
   playing: boolean;
   volume: number;
+  shuffle: boolean;
+  repeat: RepeatMode;
   positionRef: React.RefObject<number>;
   seekBarRef: React.Ref<HTMLInputElement>;
   onToggle: () => void;
@@ -12,6 +14,8 @@ interface Props {
   onPrevious: () => void;
   onVolumeChange: (v: number) => void;
   onSeek: (position: number) => void;
+  onToggleShuffle: () => void;
+  onCycleRepeat: () => void;
 }
 
 function formatTime(seconds: number): string {
@@ -20,10 +24,18 @@ function formatTime(seconds: number): string {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
+const REPEAT_LABELS: Record<RepeatMode, string> = {
+  off: "Repeat off",
+  all: "Repeat all",
+  one: "Repeat one",
+};
+
 export function PlayerBar({
   currentTrack,
   playing,
   volume,
+  shuffle,
+  repeat,
   positionRef,
   seekBarRef,
   onToggle,
@@ -31,6 +43,8 @@ export function PlayerBar({
   onPrevious,
   onVolumeChange,
   onSeek,
+  onToggleShuffle,
+  onCycleRepeat,
 }: Props) {
   const duration = currentTrack?.duration ?? 0;
   const durationLabel = useMemo(() => formatTime(duration), [duration]);
@@ -55,6 +69,13 @@ export function PlayerBar({
 
       <div className="player-bar__center">
         <div className="player-bar__controls">
+          <button
+            onClick={onToggleShuffle}
+            className={`player-bar__btn player-bar__btn--icon ${shuffle ? "player-bar__btn--active" : ""}`}
+            aria-label="Toggle shuffle"
+          >
+            S
+          </button>
           <button onClick={onPrevious} className="player-bar__btn" aria-label="Previous track">
             Prev
           </button>
@@ -67,6 +88,13 @@ export function PlayerBar({
           </button>
           <button onClick={onNext} className="player-bar__btn" aria-label="Next track">
             Next
+          </button>
+          <button
+            onClick={onCycleRepeat}
+            className={`player-bar__btn player-bar__btn--icon ${repeat !== "off" ? "player-bar__btn--active" : ""}`}
+            aria-label={REPEAT_LABELS[repeat]}
+          >
+            {repeat === "one" ? "R1" : "R"}
           </button>
         </div>
         <div className="player-bar__seek-row">

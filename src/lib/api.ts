@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { Track, AppConfig, PlaybackState } from "../types";
+import type { Track, AppConfig, PlaybackState, RepeatMode } from "../types";
 
 export const api = {
   play: (path: string) => invoke<void>("play", { path }),
@@ -17,4 +17,9 @@ export const api = {
   scanFolder: (path: string) => invoke<Track[]>("scan_folder", { path }),
   getConfig: () => invoke<AppConfig>("get_config"),
   setConfig: (config: AppConfig) => invoke<void>("set_config", { config }),
+  setShuffle: (on: boolean) => invoke<void>("set_shuffle", { on }),
+  getShuffle: () => invoke<boolean>("get_shuffle"),
+  setRepeat: (mode: RepeatMode) => invoke<void>("set_repeat", { mode }),
+  getRepeat: () => invoke<RepeatMode>("get_repeat"),
+  search: (query: string) => invoke<Track[]>("search", { query }),
 };

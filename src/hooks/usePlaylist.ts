@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { api } from "../lib/api";
 import { TRACK_ENDED, PLAYBACK_ERROR } from "../lib/events";
-import type { Track } from "../types";
+import type { Track, RepeatMode } from "../types";
 
 export function usePlaylist() {
   const [tracks, setTracks] = useState<Track[]>([]);
@@ -11,6 +11,8 @@ export function usePlaylist() {
   const [volume, setVolumeState] = useState(0.8);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [shuffle, setShuffleState] = useState(false);
+  const [repeat, setRepeatState] = useState<RepeatMode>("off");
   const position = useRef(0);
   const seekBarRef = useRef<HTMLInputElement>(null);
   const positionInterval = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -100,15 +102,50 @@ export function usePlaylist() {
     }
   }, []);
 
-  // Auto-advance on track end
+  const toggleShuffle = useCallback(async () => {
+    const next = !shuffle;
+    await api.setShuffle(next);
+    setShuffleState(next);
+  }, [shuffle]);
+
+  const setShuffle = useCallback(async (on: boolean) => {
+    await api.setShuffle(on);
+    setShuffleState(on);
+  }, []);
+
+  const cycleRepeat = useCallback(async () => {
+    const next: RepeatMode = repeat === "off" ? "all" : repeat === "all" ? "one" : "off";
+    await api.setRepeat(next);
+    setRepeatState(next);
+  }, [repeat]);
+
+  const setRepeat = useCallback(async (mode: RepeatMode) => {
+    await api.setRepeat(mode);
+    setRepeatState(mode);
+  }, []);
+
+  const search = useCallback(async (query: string): Promise<Track[]> => {
+    if (!query.trim()) return tracks;
+    return api.search(query);
+  }, [tracks]);
+
+  // Auto-advance on track end — respects repeat-one
   useEffect(() => {
-    const unlisten = listen(TRACK_ENDED, () => {
-      next();
+    const unlisten = listen(TRACK_ENDED, async () => {
+      if (repeat === "one") {
+        await api.seek(0);
+        position.current = 0;
+        if (seekBarRef.current) seekBarRef.current.value = "0";
+        await api.resume();
+        setPlaying(true);
+      } else {
+        next();
+      }
     });
     return () => {
       unlisten.then((u) => u());
     };
-  }, [next]);
+  }, [next, repeat]);
 
   // Playback error listener
   useEffect(() => {
@@ -147,6 +184,8 @@ export function usePlaylist() {
     volume,
     error,
     loading,
+    shuffle,
+    repeat,
     position,
     seekBarRef,
     loadLibrary,
@@ -159,6 +198,11 @@ export function usePlaylist() {
     previous,
     setVolume,
     seek,
+    toggleShuffle,
+    setShuffle,
+    cycleRepeat,
+    setRepeat,
+    search,
     clearError: () => setError(null),
   };
 }

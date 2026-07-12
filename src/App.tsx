@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { api } from "./lib/api";
 import { usePlaylist } from "./hooks/usePlaylist";
@@ -14,14 +14,28 @@ function App() {
   const playlist = usePlaylist();
   const { mode, setMode, cycleMode } = useMode();
   const [musicFolder, setMusicFolder] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     api.getConfig().then((c) => {
       setMusicFolder(c.music_folder);
       api.setVolume(c.volume);
+      playlist.setShuffle(c.shuffle);
+      playlist.setRepeat(c.repeat ?? "off");
       playlist.loadLibrary(c.music_folder);
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const filteredTracks = useMemo(() => {
+    if (!searchQuery.trim()) return playlist.tracks;
+    const q = searchQuery.toLowerCase();
+    return playlist.tracks.filter(
+      (t) =>
+        t.title.toLowerCase().includes(q) ||
+        t.artist.toLowerCase().includes(q) ||
+        t.album.toLowerCase().includes(q),
+    );
+  }, [playlist.tracks, searchQuery]);
 
   const handleSelectFolder = useCallback(async () => {
     const selected = await open({ directory: true, multiple: false });
@@ -31,9 +45,13 @@ function App() {
       api.setConfig({
         music_folder: selected,
         volume: playlist.volume,
+        shuffle: playlist.shuffle,
+        repeat: playlist.repeat,
+        last_track_index: null,
+        last_position: 0,
       });
     }
-  }, [playlist.volume, playlist.loadLibrary]);
+  }, [playlist.volume, playlist.shuffle, playlist.repeat, playlist.loadLibrary]);
 
   useShortcuts([
     { key: "Space", action: playlist.toggle, description: "Play/Pause" },
@@ -83,6 +101,8 @@ function App() {
       description: "Volume down",
     },
     { key: "KeyO", ctrl: true, action: handleSelectFolder, description: "Open folder" },
+    { key: "KeyS", action: playlist.toggleShuffle, description: "Toggle shuffle" },
+    { key: "KeyR", action: playlist.cycleRepeat, description: "Cycle repeat" },
   ]);
 
   const content = (() => {
@@ -90,7 +110,7 @@ function App() {
       case "flow":
         return (
           <FlowView
-            tracks={playlist.tracks}
+            tracks={filteredTracks}
             currentTrack={playlist.currentTrack}
             playing={playlist.playing}
             onSelect={playlist.playTrack}
@@ -107,7 +127,7 @@ function App() {
       default:
         return (
           <NormalView
-            tracks={playlist.tracks}
+            tracks={filteredTracks}
             currentTrack={playlist.currentTrack}
             onSelect={playlist.playTrack}
             loading={playlist.loading}
@@ -123,6 +143,8 @@ function App() {
       currentTrack={playlist.currentTrack}
       playing={playlist.playing}
       volume={playlist.volume}
+      shuffle={playlist.shuffle}
+      repeat={playlist.repeat}
       positionRef={playlist.position}
       seekBarRef={playlist.seekBarRef}
       error={playlist.error}
@@ -131,7 +153,10 @@ function App() {
       onPrevious={playlist.previous}
       onVolumeChange={playlist.setVolume}
       onSeek={playlist.seek}
+      onToggleShuffle={playlist.toggleShuffle}
+      onCycleRepeat={playlist.cycleRepeat}
       onClearError={playlist.clearError}
+      onSearch={setSearchQuery}
     >
       {mode !== "zen" && (
         <button className="app__folder-btn" onClick={handleSelectFolder}>

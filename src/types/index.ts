@@ -1,5 +1,7 @@
 export type Mode = "normal" | "flow" | "zen";
 
+export type RepeatMode = "off" | "all" | "one";
+
 export interface Track {
   path: string;
   title: string;
@@ -11,6 +13,10 @@ export interface Track {
 export interface AppConfig {
   music_folder: string;
   volume: number;
+  shuffle: boolean;
+  repeat: RepeatMode;
+  last_track_index: number | null;
+  last_position: number;
 }
 
 export interface PlaybackState {

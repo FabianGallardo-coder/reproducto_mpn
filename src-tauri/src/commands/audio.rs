@@ -4,6 +4,7 @@ use std::time::Duration;
 use tauri::State;
 
 use crate::AppState;
+use crate::audio::playlist::RepeatMode;
 use crate::audio::track_info::TrackInfo;
 use crate::error::AppError;
 
@@ -103,4 +104,44 @@ pub fn set_playlist(
         Some(t) => state.player.play_file(&t.path),
         None => Ok(()),
     }
+}
+
+#[tauri::command]
+pub fn set_shuffle(state: State<'_, Arc<AppState>>, on: bool) -> Result<(), AppError> {
+    let mut playlist = state.playlist.lock().map_err(|e| AppError::Audio(e.to_string()))?;
+    playlist.set_shuffle(on);
+    Ok(())
+}
+
+#[tauri::command]
+pub fn get_shuffle(state: State<'_, Arc<AppState>>) -> Result<bool, AppError> {
+    let playlist = state.playlist.lock().map_err(|e| AppError::Audio(e.to_string()))?;
+    Ok(playlist.is_shuffle())
+}
+
+#[tauri::command]
+pub fn set_repeat(state: State<'_, Arc<AppState>>, mode: RepeatMode) -> Result<(), AppError> {
+    let mut playlist = state.playlist.lock().map_err(|e| AppError::Audio(e.to_string()))?;
+    playlist.set_repeat(mode);
+    Ok(())
+}
+
+#[tauri::command]
+pub fn get_repeat(state: State<'_, Arc<AppState>>) -> Result<RepeatMode, AppError> {
+    let playlist = state.playlist.lock().map_err(|e| AppError::Audio(e.to_string()))?;
+    Ok(playlist.repeat_mode())
+}
+
+#[tauri::command]
+pub fn search(state: State<'_, Arc<AppState>>, query: String) -> Result<Vec<TrackInfo>, AppError> {
+    let playlist = state.playlist.lock().map_err(|e| AppError::Audio(e.to_string()))?;
+    let q = query.to_lowercase();
+    Ok(playlist.tracks().iter()
+        .filter(|t| {
+            t.title.to_lowercase().contains(&q)
+                || t.artist.to_lowercase().contains(&q)
+                || t.album.to_lowercase().contains(&q)
+        })
+        .cloned()
+        .collect())
 }

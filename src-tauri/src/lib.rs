@@ -8,6 +8,7 @@ use std::sync::{Arc, Mutex};
 
 use tauri::Manager;
 use tauri::Emitter;
+use tauri::WindowEvent;
 
 use crate::audio::player::AudioPlayer;
 use crate::audio::playlist::PlaylistManager;
@@ -20,6 +21,28 @@ pub struct AppState {
     pub player: AudioPlayer,
     pub playlist: Mutex<PlaylistManager>,
     pub config: Mutex<ConfigStore>,
+}
+
+fn save_state_on_close(state: &AppState) {
+    let position = state.player.get_state().position;
+    let playlist = state.playlist.lock().ok();
+    let mut config = match state.config.lock() {
+        Ok(c) => c,
+        Err(_) => return,
+    };
+
+    let current_index = playlist.as_ref().and_then(|p| {
+        if p.tracks().is_empty() {
+            None
+        } else {
+            Some(p.current_index())
+        }
+    });
+
+    let _ = config.update(|c| {
+        c.last_track_index = current_index;
+        c.last_position = position;
+    });
 }
 
 pub fn run() {
@@ -64,6 +87,13 @@ pub fn run() {
 
             Ok(())
         })
+        .on_window_event(|window, event| {
+            if let WindowEvent::CloseRequested { .. } = event {
+                if let Some(state) = window.try_state::<Arc<AppState>>() {
+                    save_state_on_close(&state);
+                }
+            }
+        })
         .invoke_handler(tauri::generate_handler![
             commands::audio::play,
             commands::audio::play_index,
@@ -76,6 +106,11 @@ pub fn run() {
             commands::audio::get_state,
             commands::audio::get_playlist,
             commands::audio::set_playlist,
+            commands::audio::set_shuffle,
+            commands::audio::get_shuffle,
+            commands::audio::set_repeat,
+            commands::audio::get_repeat,
+            commands::audio::search,
             commands::library::scan_folder,
             commands::config::get_config,
             commands::config::set_config,

@@ -35,4 +35,11 @@ impl ConfigStore {
         std::fs::write(&self.path, data)?;
         Ok(())
     }
+
+    pub fn update(&mut self, f: impl FnOnce(&mut AppConfig)) -> Result<(), AppError> {
+        f(&mut self.config);
+        let data = serde_json::to_string_pretty(&self.config)?;
+        std::fs::write(&self.path, data)?;
+        Ok(())
+    }
 }

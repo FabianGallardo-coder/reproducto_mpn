@@ -1,9 +1,19 @@
 use serde::{Deserialize, Serialize};
 
+use crate::audio::playlist::RepeatMode;
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AppConfig {
     pub music_folder: String,
     pub volume: f32,
+    #[serde(default)]
+    pub shuffle: bool,
+    #[serde(default)]
+    pub repeat: RepeatMode,
+    #[serde(default)]
+    pub last_track_index: Option<usize>,
+    #[serde(default)]
+    pub last_position: f64,
 }
 
 impl Default for AppConfig {
@@ -15,6 +25,10 @@ impl Default for AppConfig {
         Self {
             music_folder,
             volume: 0.8,
+            shuffle: false,
+            repeat: RepeatMode::default(),
+            last_track_index: None,
+            last_position: 0.0,
         }
     }
 }

@@ -95,6 +95,21 @@ body {
   padding: 0 8px;
 }
 
+.sidebar__search {
+  width: 100%;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  border-radius: var(--radius);
+  outline: none;
+}
+
+.sidebar__search:focus {
+  border-color: var(--accent);
+}
+
 .sidebar__title {
   font-weight: 700;
   font-size: 1.1rem;
@@ -213,6 +228,16 @@ body {
 
 .player-bar__btn--main:hover {
   background: var(--accent-hover);
+}
+
+.player-bar__btn--icon {
+  font-size: 0.75rem;
+  padding: 4px 8px;
+}
+
+.player-bar__btn--active {
+  color: var(--accent);
+  border-color: var(--accent);
 }
 
 .player-bar__volume {
