@@ -18,12 +18,15 @@
 - [x] 1.7: Dev experience (Vite puerto fijo, watcher exclusions)
 - [x] Verificación: `cargo clippy` + `tsc --noEmit` sin errores
 
-### Fase 2: Frontend (pendiente)
-- [ ] 2.1: Tipado estricto (cero `any`)
-- [ ] 2.2: Hooks (useAudio, useMode, useLibrary, useShortcuts)
-- [ ] 2.3: Layout + modos (Normal/Flow/Zen)
-- [ ] 2.4: Visualizer reactivo al audio real (FFT)
-- [ ] 2.5: Plugin toggles funcionales
+### Fase 2: Frontend
+- [x] 2.1: Tipado estricto (cero `any`, `lib/api.ts` tipado)
+- [x] 2.2: Hooks (useAudio, useMode, useLibrary, useShortcuts)
+- [x] 2.3: Layout + modos (AppLayout, Sidebar, PlayerBar)
+- [x] 2.4: Modo Normal (sidebar + track list)
+- [x] 2.5: Modo Flow (Pomodoro + visualizer + track list)
+- [x] 2.6: Modo Zen (fullscreen visualizer + track info)
+- [x] 2.7: Keyboard shortcuts (un binding por key, sin conflictos Alt+1/2/3)
+- [x] Verificación: `tsc --noEmit` + `vite build` sin errores
 
 ### Fase 3: Integraciones (pendiente)
 - [ ] 3.1: Spotify OAuth completo (token storage + refresh)

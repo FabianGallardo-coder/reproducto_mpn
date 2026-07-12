@@ -10,7 +10,14 @@ export interface Track {
 
 export interface AppConfig {
   music_folder: string;
-  mode: Mode;
   volume: number;
   crossfade_duration: number;
+}
+
+export interface PlaybackState {
+  playing: boolean;
+  position: number;
+  duration: number;
+  volume: number;
+  current_track: string | null;
 }
