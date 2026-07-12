@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from "react";
+import { useEffect, useRef } from "react";
 
 type KeyBinding = {
   key: string;
@@ -10,9 +10,12 @@ type KeyBinding = {
 };
 
 export function useShortcuts(bindings: KeyBinding[]) {
-  const handler = useCallback(
-    (e: KeyboardEvent) => {
-      for (const b of bindings) {
+  const bindingsRef = useRef(bindings);
+  bindingsRef.current = bindings;
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      for (const b of bindingsRef.current) {
         const ctrlMatch = b.ctrl ? e.ctrlKey || e.metaKey : !(e.ctrlKey || e.metaKey);
         const altMatch = b.alt ? e.altKey : !e.altKey;
         const shiftMatch = b.shift ? e.shiftKey : !e.shiftKey;
@@ -23,14 +26,11 @@ export function useShortcuts(bindings: KeyBinding[]) {
           return;
         }
       }
-    },
-    [bindings],
-  );
+    };
 
-  useEffect(() => {
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [handler]);
+  }, []);
 }
 
 export type { KeyBinding };

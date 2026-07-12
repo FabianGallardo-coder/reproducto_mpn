@@ -1,4 +1,7 @@
+import { memo } from "react";
 import type { Mode } from "../../types";
+
+const MODES: readonly Mode[] = ["normal", "flow", "zen"];
 
 interface Props {
   mode: Mode;
@@ -16,17 +19,36 @@ export function Sidebar({ mode, onModeChange, children }: Props) {
         {children}
       </nav>
       <div className="sidebar__modes">
-        {(["normal", "flow", "zen"] as const).map((m) => (
-          <button
+        {MODES.map((m) => (
+          <ModeButton
             key={m}
-            className={`sidebar__mode-btn ${mode === m ? "sidebar__mode-btn--active" : ""}`}
-            onClick={() => onModeChange(m)}
-            title={m.toUpperCase()}
-          >
-            {m === "normal" ? "N" : m === "flow" ? "F" : "Z"}
-          </button>
+            mode={m}
+            active={mode === m}
+            onSelect={onModeChange}
+          />
         ))}
       </div>
     </aside>
   );
 }
+
+const ModeButton = memo(function ModeButton({
+  mode,
+  active,
+  onSelect,
+}: {
+  mode: Mode;
+  active: boolean;
+  onSelect: (mode: Mode) => void;
+}) {
+  return (
+    <button
+      className={`sidebar__mode-btn ${active ? "sidebar__mode-btn--active" : ""}`}
+      onClick={() => onSelect(mode)}
+      title={mode.toUpperCase()}
+      aria-label={`${mode} mode`}
+    >
+      {mode === "normal" ? "N" : mode === "flow" ? "F" : "Z"}
+    </button>
+  );
+});

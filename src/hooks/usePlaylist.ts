@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { api } from "../lib/api";
+import { TRACK_ENDED, PLAYBACK_ERROR } from "../lib/events";
 import type { Track } from "../types";
 
 export function usePlaylist() {
@@ -9,16 +10,20 @@ export function usePlaylist() {
   const [playing, setPlaying] = useState(false);
   const [volume, setVolumeState] = useState(0.8);
   const [error, setError] = useState<string | null>(null);
-  const [position, setPosition] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const position = useRef(0);
+  const seekBarRef = useRef<HTMLInputElement>(null);
   const positionInterval = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const currentTrack = currentIndex >= 0 ? tracks[currentIndex] ?? null : null;
 
   const loadLibrary = useCallback(async (path: string) => {
+    setLoading(true);
     const result = await api.scanFolder(path);
     setTracks(result);
     setCurrentIndex(-1);
     setPlaying(false);
+    setLoading(false);
   }, []);
 
   const playTrack = useCallback(
@@ -87,14 +92,17 @@ export function usePlaylist() {
     setVolumeState(v);
   }, []);
 
-  const seek = useCallback(async (position: number) => {
-    await api.seek(position);
-    setPosition(position);
+  const seek = useCallback(async (pos: number) => {
+    await api.seek(pos);
+    position.current = pos;
+    if (seekBarRef.current) {
+      seekBarRef.current.value = String(pos);
+    }
   }, []);
 
   // Auto-advance on track end
   useEffect(() => {
-    const unlisten = listen("track-ended", () => {
+    const unlisten = listen(TRACK_ENDED, () => {
       next();
     });
     return () => {
@@ -104,7 +112,7 @@ export function usePlaylist() {
 
   // Playback error listener
   useEffect(() => {
-    const unlisten = listen<string>("playback-error", (e) => {
+    const unlisten = listen<string>(PLAYBACK_ERROR, (e) => {
       setError(e.payload);
     });
     return () => {
@@ -112,12 +120,15 @@ export function usePlaylist() {
     };
   }, []);
 
-  // Position polling when playing
+  // Position polling when playing — updates seek bar DOM directly, zero re-renders
   useEffect(() => {
     if (playing) {
       positionInterval.current = setInterval(async () => {
         const state = await api.getState();
-        setPosition(state.position);
+        position.current = state.position;
+        if (seekBarRef.current) {
+          seekBarRef.current.value = String(state.position);
+        }
       }, 500);
     } else if (positionInterval.current) {
       clearInterval(positionInterval.current);
@@ -135,7 +146,9 @@ export function usePlaylist() {
     playing,
     volume,
     error,
+    loading,
     position,
+    seekBarRef,
     loadLibrary,
     playTrack,
     playAtIndex,

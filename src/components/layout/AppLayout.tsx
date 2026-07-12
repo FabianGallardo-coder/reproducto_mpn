@@ -8,7 +8,8 @@ interface Props {
   currentTrack: Track | null;
   playing: boolean;
   volume: number;
-  position: number;
+  positionRef: React.RefObject<number>;
+  seekBarRef: React.Ref<HTMLInputElement>;
   error: string | null;
   onToggle: () => void;
   onNext: () => void;
@@ -25,7 +26,8 @@ export function AppLayout({
   currentTrack,
   playing,
   volume,
-  position,
+  positionRef,
+  seekBarRef,
   error,
   onToggle,
   onNext,
@@ -63,7 +65,8 @@ export function AppLayout({
         currentTrack={currentTrack}
         playing={playing}
         volume={volume}
-        position={position}
+        positionRef={positionRef}
+        seekBarRef={seekBarRef}
         onToggle={onToggle}
         onNext={onNext}
         onPrevious={onPrevious}

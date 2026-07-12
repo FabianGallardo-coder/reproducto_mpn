@@ -5,15 +5,16 @@ interface Props {
   tracks: Track[];
   currentTrack: Track | null;
   onSelect: (track: Track) => void;
+  loading?: boolean;
 }
 
-export function NormalView({ tracks, currentTrack, onSelect }: Props) {
+export function NormalView({ tracks, currentTrack, onSelect, loading }: Props) {
   return (
     <div className="normal-view">
       <div className="normal-view__header">
         <h2>Library</h2>
       </div>
-      <TrackList tracks={tracks} currentTrack={currentTrack} onSelect={onSelect} />
+      <TrackList tracks={tracks} currentTrack={currentTrack} onSelect={onSelect} loading={loading} />
     </div>
   );
 }

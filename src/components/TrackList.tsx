@@ -1,12 +1,37 @@
+import { memo } from "react";
 import type { Track } from "../types";
+
+interface TrackItemProps {
+  track: Track;
+  isActive: boolean;
+  onSelect: (track: Track) => void;
+}
+
+const TrackItem = memo(function TrackItem({ track, isActive, onSelect }: TrackItemProps) {
+  return (
+    <li
+      className={`track-list__item ${isActive ? "track-list__item--active" : ""}`}
+      onClick={() => onSelect(track)}
+    >
+      <span className="track-list__title">{track.title}</span>
+      <span className="track-list__artist">{track.artist}</span>
+      <span className="track-list__album">{track.album}</span>
+    </li>
+  );
+});
 
 interface Props {
   tracks: Track[];
   currentTrack: Track | null;
   onSelect: (track: Track) => void;
+  loading?: boolean;
 }
 
-export function TrackList({ tracks, currentTrack, onSelect }: Props) {
+export function TrackList({ tracks, currentTrack, onSelect, loading }: Props) {
+  if (loading) {
+    return <div className="track-list__loading">Scanning...</div>;
+  }
+
   if (tracks.length === 0) {
     return <div className="track-list__empty">No tracks. Scan a folder.</div>;
   }
@@ -14,15 +39,12 @@ export function TrackList({ tracks, currentTrack, onSelect }: Props) {
   return (
     <ul className="track-list">
       {tracks.map((t) => (
-        <li
+        <TrackItem
           key={t.path}
-          className={`track-list__item ${currentTrack?.path === t.path ? "track-list__item--active" : ""}`}
-          onClick={() => onSelect(t)}
-        >
-          <span className="track-list__title">{t.title}</span>
-          <span className="track-list__artist">{t.artist}</span>
-          <span className="track-list__album">{t.album}</span>
-        </li>
+          track={t}
+          isActive={currentTrack?.path === t.path}
+          onSelect={onSelect}
+        />
       ))}
     </ul>
   );

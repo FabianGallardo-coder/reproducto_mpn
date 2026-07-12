@@ -13,6 +13,9 @@ use crate::audio::player::AudioPlayer;
 use crate::audio::playlist::PlaylistManager;
 use crate::config::store::ConfigStore;
 
+pub const EVENT_TRACK_ENDED: &str = "track-ended";
+pub const EVENT_PLAYBACK_ERROR: &str = "playback-error";
+
 pub struct AppState {
     pub player: AudioPlayer,
     pub playlist: Mutex<PlaylistManager>,
@@ -48,10 +51,10 @@ pub fn run() {
                     while let Ok(event) = event_rx.recv() {
                         match event {
                             crate::audio::player::AudioEvent::TrackEnded => {
-                                let _ = app_handle.emit("track-ended", ());
+                                let _ = app_handle.emit(crate::EVENT_TRACK_ENDED, ());
                             }
                             crate::audio::player::AudioEvent::Error(msg) => {
-                                let _ = app_handle.emit("playback-error", msg);
+                                let _ = app_handle.emit(crate::EVENT_PLAYBACK_ERROR, msg);
                             }
                         }
                     }

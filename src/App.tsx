@@ -5,6 +5,7 @@ import { usePlaylist } from "./hooks/usePlaylist";
 import { useMode } from "./hooks/useMode";
 import { useShortcuts } from "./hooks/useShortcuts";
 import { AppLayout } from "./components/layout/AppLayout";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import { NormalView } from "./components/modes/normal/NormalView";
 import { FlowView } from "./components/modes/flow/FlowView";
 import { ZenView } from "./components/modes/zen/ZenView";
@@ -93,6 +94,7 @@ function App() {
             currentTrack={playlist.currentTrack}
             playing={playlist.playing}
             onSelect={playlist.playTrack}
+            loading={playlist.loading}
           />
         );
       case "zen":
@@ -108,6 +110,7 @@ function App() {
             tracks={playlist.tracks}
             currentTrack={playlist.currentTrack}
             onSelect={playlist.playTrack}
+            loading={playlist.loading}
           />
         );
     }
@@ -120,7 +123,8 @@ function App() {
       currentTrack={playlist.currentTrack}
       playing={playlist.playing}
       volume={playlist.volume}
-      position={playlist.position}
+      positionRef={playlist.position}
+      seekBarRef={playlist.seekBarRef}
       error={playlist.error}
       onToggle={playlist.toggle}
       onNext={playlist.next}
@@ -134,7 +138,7 @@ function App() {
           {musicFolder || "Select music folder"}
         </button>
       )}
-      {content}
+      <ErrorBoundary>{content}</ErrorBoundary>
     </AppLayout>
   );
 }
