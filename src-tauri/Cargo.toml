@@ -1,0 +1,26 @@
+[package]
+name = "flowplayer"
+version = "0.1.0"
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
+tauri-plugin-shell = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+rodio = "0.18"
+sled = "0.34"
+id3 = "1"
+walkdir = "2"
+reqwest = { version = "0.12", features = ["json"] }
+tokio = { version = "1", features = ["full"] }
+thiserror = "2"
+dirs = "6"
+
+[lints.clippy]
+unwrap_used = "deny"
+expect_used = "deny"

@@ -1,3 +1,42 @@
+## Progress Checklist
+
+### Fase 0: Scaffolding
+- [x] 0.1: Proyecto Tauri + React + TypeScript
+- [x] 0.2: TypeScript estricto (`strict: true`, no `@ts-ignore`)
+- [x] 0.3: Vite puerto fijo 1420 + watcher exclusions
+- [x] 0.4: Git init + commit
+- [x] 0.5: Nombres correctos (FlowPlayer, flowplayer)
+- [x] 0.6: `.gitignore` completo
+
+### Fase 1: Backend Rust Modular
+- [x] 1.1: Estructura modular (10+ archivos, no monolito)
+- [x] 1.2: Error handling con `thiserror` (AppError enum)
+- [x] 1.3: Audio engine channel-based (Send+Sync, no bloquea UI)
+- [x] 1.4: Metadata cache con sled
+- [x] 1.5: Commands Tauri (play/pause/resume/seek/next/prev/volume/scan/config)
+- [x] 1.6: Config cross-platform con `dirs::audio_dir()`
+- [x] 1.7: Dev experience (Vite puerto fijo, watcher exclusions)
+- [x] Verificación: `cargo clippy` + `tsc --noEmit` sin errores
+
+### Fase 2: Frontend (pendiente)
+- [ ] 2.1: Tipado estricto (cero `any`)
+- [ ] 2.2: Hooks (useAudio, useMode, useLibrary, useShortcuts)
+- [ ] 2.3: Layout + modos (Normal/Flow/Zen)
+- [ ] 2.4: Visualizer reactivo al audio real (FFT)
+- [ ] 2.5: Plugin toggles funcionales
+
+### Fase 3: Integraciones (pendiente)
+- [ ] 3.1: Spotify OAuth completo (token storage + refresh)
+- [ ] 3.2: YouTube metadata (una implementación)
+- [ ] 3.3: Radio streaming (SomaFM presets)
+
+### Fase 4: Testing + CI (pendiente)
+- [ ] 4.1: Rust unit tests
+- [ ] 4.2: Frontend tests (vitest)
+- [ ] 4.3: GitHub Actions CI
+
+---
+
  You are tasked with creating a modern, efficient multimedia player application called "FlowPlayer" (formerly
   reproductor_mpn) with the following specifications:
 
