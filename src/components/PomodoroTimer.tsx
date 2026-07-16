@@ -18,27 +18,28 @@ export function PomodoroTimer({ onComplete }: Props) {
     setRunning(false);
   }, []);
 
+  // Interval to decrement seconds
   useEffect(() => {
     if (!running) return;
     const id = setInterval(() => {
-      setSeconds((s) => {
-        if (s <= 1) {
-          clearInterval(id);
-          if (isWork) {
-            setIsWork(false);
-            setSeconds(BREAK_MINUTES * 60);
-            onComplete?.();
-          } else {
-            setIsWork(true);
-            setSeconds(WORK_MINUTES * 60);
-          }
-          return 0;
-        }
-        return s - 1;
-      });
+      setSeconds((s) => (s > 0 ? s - 1 : 0));
     }, 1000);
     return () => clearInterval(id);
-  }, [running, isWork, onComplete]);
+  }, [running]);
+
+  // Transition timer mode when seconds hit 0
+  useEffect(() => {
+    if (seconds === 0) {
+      if (isWork) {
+        setIsWork(false);
+        setSeconds(BREAK_MINUTES * 60);
+        onComplete?.();
+      } else {
+        setIsWork(true);
+        setSeconds(WORK_MINUTES * 60);
+      }
+    }
+  }, [seconds, isWork, onComplete]);
 
   const mins = Math.floor(seconds / 60);
   const secs = seconds % 60;

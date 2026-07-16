@@ -4,7 +4,7 @@
   "identifier": "com.flowplayer.app",
   "build": {
     "beforeDevCommand": "npm run dev",
-    "devUrl": "http://localhost:1420",
+    "devUrl": "http://localhost:5173",
     "beforeBuildCommand": "npm run build",
     "frontendDist": "../dist"
   },
@@ -17,11 +17,24 @@
         "minWidth": 800,
         "minHeight": 600,
         "resizable": true,
-        "decorations": true
+        "decorations": true,
+        "visible": true
       }
     ],
     "security": {
-      "csp": null
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: tauri: asset:; font-src 'self'; connect-src 'self' ipc: http://ipc.localhost; frame-src 'none'",
+      "capabilities": [
+        {
+          "identifier": "default-capability",
+          "description": "Default capabilities for the app",
+          "permissions": [
+            "core:default",
+            "core:event:allow-listen",
+            "core:window:allow-show",
+            "shell:allow-open"
+          ]
+        }
+      ]
     }
   },
   "plugins": {

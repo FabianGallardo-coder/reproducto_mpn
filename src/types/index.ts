@@ -1,4 +1,4 @@
-export type Mode = "normal" | "flow" | "zen";
+export type Mode = "normal" | "flow" | "zen" | "mini";
 
 export type RepeatMode = "off" | "all" | "one";
 

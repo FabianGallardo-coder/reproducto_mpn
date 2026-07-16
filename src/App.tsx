@@ -1,22 +1,28 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import { api } from "./lib/api";
 import { usePlaylist } from "./hooks/usePlaylist";
 import { useMode } from "./hooks/useMode";
 import { useShortcuts } from "./hooks/useShortcuts";
+import { useMediaSession } from "./hooks/useMediaSession";
+import { useCoverArt } from "./lib/useCoverArt";
 import { AppLayout } from "./components/layout/AppLayout";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { NormalView } from "./components/modes/normal/NormalView";
 import { FlowView } from "./components/modes/flow/FlowView";
 import { ZenView } from "./components/modes/zen/ZenView";
+import { MiniView } from "./components/modes/mini/MiniView";
 
 function App() {
   const playlist = usePlaylist();
   const { mode, setMode, cycleMode } = useMode();
   const [musicFolder, setMusicFolder] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const bgCoverUrl = useCoverArt(playlist.currentTrack?.path);
 
   useEffect(() => {
+    getCurrentWindow().show();
     api.getConfig().then((c) => {
       setMusicFolder(c.music_folder);
       api.setVolume(c.volume);
@@ -38,18 +44,26 @@ function App() {
   }, [playlist.tracks, searchQuery]);
 
   const handleSelectFolder = useCallback(async () => {
-    const selected = await open({ directory: true, multiple: false });
-    if (typeof selected === "string") {
-      setMusicFolder(selected);
-      playlist.loadLibrary(selected);
-      api.setConfig({
-        music_folder: selected,
-        volume: playlist.volume,
-        shuffle: playlist.shuffle,
-        repeat: playlist.repeat,
-        last_track_index: null,
-        last_position: 0,
-      });
+    try {
+      const selected = await open({ directory: true, multiple: false });
+      if (typeof selected === "string") {
+        setMusicFolder(selected);
+        // Show loading state while loading library
+        await playlist.loadLibrary(selected);
+        // Wait for library to load before saving config
+        await api.setConfig({
+          music_folder: selected,
+          volume: playlist.volume,
+          shuffle: playlist.shuffle,
+          repeat: playlist.repeat,
+          last_track_index: null,
+          last_position: 0,
+        });
+      }
+    } catch (error) {
+      // Handle error - could show a toast or set error state
+      console.error("Failed to select folder:", error);
+      // Optionally set an error state in the playlist hook if needed
     }
   }, [playlist.volume, playlist.shuffle, playlist.repeat, playlist.loadLibrary]);
 
@@ -72,6 +86,12 @@ function App() {
       alt: true,
       action: () => setMode("zen"),
       description: "Zen mode",
+    },
+    {
+      key: "KeyM",
+      alt: true,
+      action: () => setMode("mini"),
+      description: "Mini mode",
     },
     { key: "Tab", action: cycleMode, description: "Cycle modes" },
     {
@@ -105,6 +125,24 @@ function App() {
     { key: "KeyR", action: playlist.cycleRepeat, description: "Cycle repeat" },
   ]);
 
+  const mediaActions = useMemo(
+    () => ({
+      onPlay: playlist.resume,
+      onPause: playlist.pause,
+      onNext: playlist.next,
+      onPrevious: playlist.previous,
+      onSeek: playlist.seek,
+    }),
+    [playlist.resume, playlist.pause, playlist.next, playlist.previous, playlist.seek],
+  );
+
+  useMediaSession(
+    playlist.currentTrack,
+    playlist.playing,
+    playlist.position.current,
+    mediaActions,
+  );
+
   const content = (() => {
     switch (mode) {
       case "flow":
@@ -113,6 +151,7 @@ function App() {
             tracks={filteredTracks}
             currentTrack={playlist.currentTrack}
             playing={playlist.playing}
+            position={playlist.positionValue}
             onSelect={playlist.playTrack}
             loading={playlist.loading}
           />
@@ -122,6 +161,23 @@ function App() {
           <ZenView
             currentTrack={playlist.currentTrack}
             playing={playlist.playing}
+            onExit={() => setMode("normal")}
+            onToggle={playlist.toggle}
+            onNext={playlist.next}
+            onPrevious={playlist.previous}
+          />
+        );
+      case "mini":
+        return (
+          <MiniView
+            currentTrack={playlist.currentTrack}
+            playing={playlist.playing}
+            positionValue={playlist.positionValue}
+            onToggle={playlist.toggle}
+            onNext={playlist.next}
+            onPrevious={playlist.previous}
+            onSeek={playlist.seek}
+            onExpand={() => setMode("normal")}
           />
         );
       default:
@@ -137,7 +193,11 @@ function App() {
   })();
 
   return (
-    <AppLayout
+    <>
+      <div className="app-bg">
+        {bgCoverUrl && <img src={bgCoverUrl} alt="" className="app-bg__img" />}
+      </div>
+      <AppLayout
       mode={mode}
       onModeChange={setMode}
       currentTrack={playlist.currentTrack}
@@ -145,8 +205,7 @@ function App() {
       volume={playlist.volume}
       shuffle={playlist.shuffle}
       repeat={playlist.repeat}
-      positionRef={playlist.position}
-      seekBarRef={playlist.seekBarRef}
+      positionValue={playlist.positionValue}
       error={playlist.error}
       onToggle={playlist.toggle}
       onNext={playlist.next}
@@ -158,13 +217,14 @@ function App() {
       onClearError={playlist.clearError}
       onSearch={setSearchQuery}
     >
-      {mode !== "zen" && (
+      {mode !== "zen" && mode !== "mini" && (
         <button className="app__folder-btn" onClick={handleSelectFolder}>
           {musicFolder || "Select music folder"}
         </button>
       )}
       <ErrorBoundary>{content}</ErrorBoundary>
     </AppLayout>
+    </>
   );
 }
 

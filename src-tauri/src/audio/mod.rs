@@ -1,3 +1,4 @@
+pub mod analyzer;
 pub mod playlist;
 pub mod player;
 pub mod sources;

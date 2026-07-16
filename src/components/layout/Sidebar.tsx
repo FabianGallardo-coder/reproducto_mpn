@@ -1,7 +1,20 @@
 import { memo, useState, useCallback } from "react";
 import type { Mode } from "../../types";
+import { SearchIcon, MusicIcon } from "../ui/Icons";
 
-const MODES: readonly Mode[] = ["normal", "flow", "zen"];
+const MODES: readonly Mode[] = ["normal", "flow", "zen", "mini"];
+const MODE_ICONS: Record<Mode, typeof MusicIcon> = {
+  normal: MusicIcon,
+  flow: MusicIcon,
+  zen: MusicIcon,
+  mini: MusicIcon,
+};
+const MODE_LABELS: Record<Mode, string> = {
+  normal: "Library",
+  flow: "Flow",
+  zen: "Zen",
+  mini: "Mini",
+};
 
 interface Props {
   mode: Mode;
@@ -28,14 +41,17 @@ export function Sidebar({ mode, onModeChange, onSearch, children }: Props) {
       <nav className="sidebar__nav">
         {!collapsed && <div className="sidebar__title">FlowPlayer</div>}
         {!collapsed && onSearch && (
-          <input
-            type="search"
-            className="sidebar__search"
-            placeholder="Search..."
-            value={query}
-            onChange={handleSearch}
-            aria-label="Search tracks"
-          />
+          <div className="sidebar__search-wrap">
+            <SearchIcon size={14} className="sidebar__search-icon" />
+            <input
+              type="search"
+              className="sidebar__search"
+              placeholder="Search..."
+              value={query}
+              onChange={handleSearch}
+              aria-label="Search tracks"
+            />
+          </div>
         )}
         {children}
       </nav>
@@ -62,14 +78,15 @@ const ModeButton = memo(function ModeButton({
   active: boolean;
   onSelect: (mode: Mode) => void;
 }) {
+  const Icon = MODE_ICONS[mode];
   return (
     <button
       className={`sidebar__mode-btn ${active ? "sidebar__mode-btn--active" : ""}`}
       onClick={() => onSelect(mode)}
-      title={mode.toUpperCase()}
+      title={MODE_LABELS[mode]}
       aria-label={`${mode} mode`}
     >
-      {mode === "normal" ? "N" : mode === "flow" ? "F" : "Z"}
+      <Icon size={16} />
     </button>
   );
 });

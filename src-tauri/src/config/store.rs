@@ -43,3 +43,72 @@ impl ConfigStore {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::audio::playlist::RepeatMode;
+
+    fn temp_path(name: &str) -> std::path::PathBuf {
+        std::env::temp_dir().join(format!("flowplayer_test_{name}.json"))
+    }
+
+    #[test]
+    fn load_creates_default_when_missing() {
+        let path = temp_path("load_default");
+        let _ = std::fs::remove_file(&path);
+
+        let store = ConfigStore::load(&path).unwrap();
+        let cfg = store.get();
+        assert_eq!(cfg.volume, 0.8);
+        assert!(!cfg.shuffle);
+        assert_eq!(cfg.repeat, RepeatMode::All);
+        assert!(cfg.last_track_index.is_none());
+
+        let _ = std::fs::remove_file(&path);
+    }
+
+    #[test]
+    fn set_persists_config() {
+        let path = temp_path("set_persist");
+        let _ = std::fs::remove_file(&path);
+
+        let mut store = ConfigStore::load(&path).unwrap();
+        store
+            .update(|c| {
+                c.volume = 0.5;
+                c.shuffle = true;
+            })
+            .unwrap();
+
+        let reloaded = ConfigStore::load(&path).unwrap();
+        let cfg = reloaded.get();
+        assert_eq!(cfg.volume, 0.5);
+        assert!(cfg.shuffle);
+
+        let _ = std::fs::remove_file(&path);
+    }
+
+    #[test]
+    fn roundtrip_json() {
+        let path = temp_path("roundtrip");
+        let _ = std::fs::remove_file(&path);
+
+        let mut store = ConfigStore::load(&path).unwrap();
+        store
+            .update(|c| {
+                c.last_track_index = Some(42);
+                c.last_position = 123.456;
+                c.repeat = RepeatMode::One;
+            })
+            .unwrap();
+
+        let reloaded = ConfigStore::load(&path).unwrap();
+        let cfg = reloaded.get();
+        assert_eq!(cfg.last_track_index, Some(42));
+        assert!((cfg.last_position - 123.456).abs() < f64::EPSILON);
+        assert_eq!(cfg.repeat, RepeatMode::One);
+
+        let _ = std::fs::remove_file(&path);
+    }
+}

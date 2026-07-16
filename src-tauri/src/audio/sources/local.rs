@@ -1,7 +1,3 @@
-#![allow(dead_code)]
-
-use crate::error::AppError;
-
 pub fn is_supported(path: &str) -> bool {
     matches!(
         path.rsplit('.').next().map(|e| e.to_lowercase()).as_deref(),
@@ -9,14 +5,25 @@ pub fn is_supported(path: &str) -> bool {
     )
 }
 
-pub fn validate_file(path: &str) -> Result<(), AppError> {
-    if !is_supported(path) {
-        return Err(AppError::Audio(format!(
-            "Unsupported format: {path}"
-        )));
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn supported_formats() {
+        assert!(is_supported("song.mp3"));
+        assert!(is_supported("track.FLAC"));
+        assert!(is_supported("recording.wav"));
+        assert!(is_supported("audio.ogg"));
+        assert!(is_supported("podcast.aac"));
+        assert!(is_supported("clip.m4a"));
     }
-    if !std::path::Path::new(path).exists() {
-        return Err(AppError::Audio(format!("File not found: {path}")));
+
+    #[test]
+    fn unsupported_formats() {
+        assert!(!is_supported("image.png"));
+        assert!(!is_supported("video.mp4"));
+        assert!(!is_supported("doc.txt"));
+        assert!(!is_supported("noext"));
     }
-    Ok(())
 }

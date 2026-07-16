@@ -29,3 +29,31 @@ impl Serialize for AppError {
         serializer.serialize_str(&self.to_string())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn error_display_messages() {
+        assert_eq!(
+            AppError::Audio("no device".into()).to_string(),
+            "Audio error: no device"
+        );
+        assert_eq!(
+            AppError::Config("bad value".into()).to_string(),
+            "Config error: bad value"
+        );
+        assert_eq!(
+            AppError::Metadata("no tags".into()).to_string(),
+            "Metadata error: no tags"
+        );
+    }
+
+    #[test]
+    fn error_serializes_to_string() {
+        let err = AppError::Audio("test".into());
+        let json = serde_json::to_string(&err).unwrap();
+        assert_eq!(json, "\"Audio error: test\"");
+    }
+}

@@ -3,10 +3,10 @@ use lofty::file::{AudioFile, TaggedFileExt};
 use lofty::read_from_path;
 use lofty::tag::Accessor;
 
+use crate::audio::track_info::TrackInfo;
 use crate::error::AppError;
-use crate::metadata::cache::CachedTrack;
 
-pub fn parse_file(path: &str) -> Result<CachedTrack, AppError> {
+pub fn parse_file(path: &str) -> Result<TrackInfo, AppError> {
     let tagged_file = read_from_path(path).map_err(|e| match e.kind() {
         ErrorKind::UnsupportedTag => AppError::Metadata(format!("No tags: {path}")),
         _ => AppError::Metadata(format!("Read metadata: {e}")),
@@ -36,7 +36,7 @@ pub fn parse_file(path: &str) -> Result<CachedTrack, AppError> {
         title
     };
 
-    Ok(CachedTrack {
+    Ok(TrackInfo {
         path: path.to_string(),
         title,
         artist: if artist.is_empty() { "Unknown".into() } else { artist },

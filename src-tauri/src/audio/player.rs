@@ -1,6 +1,7 @@
+use std::collections::VecDeque;
 use std::io::BufReader;
 use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::{mpsc, Arc};
+use std::sync::{mpsc, Arc, Mutex};
 use std::time::{Duration, Instant};
 
 use rodio::{Decoder, OutputStream, Sink, Source};
@@ -19,6 +20,7 @@ pub struct PlaybackState {
 
 pub enum AudioCommand {
     PlayFile(String),
+    PlayUrl(String),
     Pause,
     Resume,
     Stop,
@@ -44,6 +46,45 @@ struct SharedState {
     current_track: std::sync::Mutex<Option<String>>,
 }
 
+struct AmplitudeMonitor<I: Source<Item = i16>> {
+    input: I,
+    amplitude_buf: Arc<Mutex<VecDeque<f32>>>,
+}
+
+impl<I: Source<Item = i16>> Iterator for AmplitudeMonitor<I> {
+    type Item = i16;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let sample = self.input.next()?;
+        let amp = (sample as f32 / i16::MAX as f32).abs();
+        if let Ok(mut buf) = self.amplitude_buf.lock() {
+            if buf.len() >= 64 {
+                buf.pop_front();
+            }
+            buf.push_back(amp);
+        }
+        Some(sample)
+    }
+}
+
+impl<I: Source<Item = i16>> Source for AmplitudeMonitor<I> {
+    fn current_frame_len(&self) -> Option<usize> {
+        self.input.current_frame_len()
+    }
+
+    fn channels(&self) -> u16 {
+        self.input.channels()
+    }
+
+    fn sample_rate(&self) -> u32 {
+        self.input.sample_rate()
+    }
+
+    fn total_duration(&self) -> Option<Duration> {
+        self.input.total_duration()
+    }
+}
+
 fn f64_to_u64(v: f64) -> u64 {
     v.to_bits()
 }
@@ -53,7 +94,7 @@ fn u64_to_f64(v: u64) -> f64 {
 }
 
 impl AudioPlayer {
-    pub fn new() -> Result<(Self, mpsc::Receiver<AudioEvent>), AppError> {
+    pub fn new(analyzer_buf: Arc<Mutex<VecDeque<f32>>>) -> Result<(Self, mpsc::Receiver<AudioEvent>), AppError> {
         let (cmd_tx, cmd_rx) = mpsc::channel::<AudioCommand>();
         let (event_tx, event_rx) = mpsc::channel::<AudioEvent>();
         let (init_tx, init_rx) = mpsc::channel::<Result<(), String>>();
@@ -67,6 +108,7 @@ impl AudioPlayer {
         });
 
         let shared_clone = Arc::clone(&shared);
+        let analyzer_buf_clone = Arc::clone(&analyzer_buf);
 
         std::thread::Builder::new()
             .name("audio-engine".into())
@@ -123,7 +165,11 @@ impl AudioPlayer {
                             shared_clone.position.store(f64_to_u64(0.0), Ordering::Relaxed);
 
                             sink.stop();
-                            sink.append(source);
+                            let monitored = AmplitudeMonitor {
+                                input: source,
+                                amplitude_buf: Arc::clone(&analyzer_buf_clone),
+                            };
+                            sink.append(monitored);
 
                             shared_clone
                                 .playing
@@ -154,6 +200,30 @@ impl AudioPlayer {
                                 })
                                 .map(|_| ())
                                 .map_err(|e| AppError::Audio(format!("Spawn poll: {e}")));
+                        }
+                        AudioCommand::PlayUrl(url) => {
+                            let stream = crate::radio::StreamReader::new(&url);
+
+                            let source = match Decoder::new(stream) {
+                                Ok(s) => s,
+                                Err(e) => {
+                                    let _ = event_tx.send(AudioEvent::Error(format!(
+                                        "Cannot decode stream: {e}"
+                                    )));
+                                    continue;
+                                }
+                            };
+
+                            shared_clone.duration.store(f64_to_u64(0.0), Ordering::Relaxed);
+                            shared_clone.position.store(f64_to_u64(0.0), Ordering::Relaxed);
+
+                            sink.stop();
+                            let monitored = AmplitudeMonitor {
+                                input: source,
+                                amplitude_buf: Arc::clone(&analyzer_buf_clone),
+                            };
+                            sink.append(monitored);
+                            shared_clone.playing.store(true, Ordering::Relaxed);
                         }
                         AudioCommand::Pause => {
                             sink.pause();
@@ -206,6 +276,18 @@ impl AudioPlayer {
             .current_track
             .lock()
             .map_err(|e| AppError::Audio(e.to_string()))? = Some(path.to_string());
+        Ok(())
+    }
+
+    pub fn play_url(&self, url: &str) -> Result<(), AppError> {
+        self.tx
+            .send(AudioCommand::PlayUrl(url.to_string()))
+            .map_err(|e| AppError::Audio(e.to_string()))?;
+        *self
+            .shared
+            .current_track
+            .lock()
+            .map_err(|e| AppError::Audio(e.to_string()))? = Some(url.to_string());
         Ok(())
     }
 

@@ -1,6 +1,33 @@
 import { invoke } from "@tauri-apps/api/core";
 import type { Track, AppConfig, PlaybackState, RepeatMode } from "../types";
 
+export interface AudioData {
+  bins: number[];
+}
+
+export interface RadioStation {
+  name: string;
+  genre: string;
+  url: string;
+  description: string;
+}
+
+export interface YouTubeMeta {
+  title: string;
+  artist: string;
+  duration: number;
+  thumbnail: string;
+}
+
+export interface LrcLyrics {
+  id: number;
+  track_name: string;
+  artist_name: string;
+  instrumental: boolean;
+  plain_lyrics: string | null;
+  synced_lyrics: string | null;
+}
+
 export const api = {
   play: (path: string) => invoke<void>("play", { path }),
   playIndex: (index: number) => invoke<Track | null>("play_index", { index }),
@@ -22,4 +49,13 @@ export const api = {
   setRepeat: (mode: RepeatMode) => invoke<void>("set_repeat", { mode }),
   getRepeat: () => invoke<RepeatMode>("get_repeat"),
   search: (query: string) => invoke<Track[]>("search", { query }),
+  getAudioData: () => invoke<AudioData>("get_audio_data"),
+  playUrl: (url: string) => invoke<void>("play_url", { url }),
+  listRadioStations: () => invoke<RadioStation[]>("list_radio_stations"),
+  youtubeMetadata: (url: string) => invoke<YouTubeMeta>("youtube_metadata", { url }),
+  youtubeStreamUrl: (url: string) => invoke<string>("youtube_stream_url", { url }),
+  fetchLyrics: (artist: string, track: string, album?: string, duration?: number) =>
+    invoke<LrcLyrics>("fetch_lyrics", { artist, track, album: album ?? null, duration: duration ?? null }),
+  getCover: (path: string) => invoke<number[] | null>("get_cover", { path }),
+  setWindowDecorations: (enabled: boolean) => invoke<void>("set_window_decorations", { enabled }),
 };

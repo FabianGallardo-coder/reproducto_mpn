@@ -21,7 +21,7 @@ export class ErrorBoundary extends Component<Props, State> {
         <div className="error-boundary">
           <p>Something went wrong.</p>
           <button
-            className="pomodoro__btn"
+            className="error-boundary__btn"
             onClick={() => this.setState({ error: null })}
           >
             Retry

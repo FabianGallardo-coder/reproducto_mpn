@@ -11,43 +11,66 @@ export function usePlaylist() {
   const [volume, setVolumeState] = useState(0.8);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [trackLoading, setTrackLoading] = useState(false);
   const [shuffle, setShuffleState] = useState(false);
   const [repeat, setRepeatState] = useState<RepeatMode>("off");
   const position = useRef(0);
-  const seekBarRef = useRef<HTMLInputElement>(null);
+  const [positionValue, setPositionValue] = useState(0);
   const positionInterval = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const currentTrack = currentIndex >= 0 ? tracks[currentIndex] ?? null : null;
 
   const loadLibrary = useCallback(async (path: string) => {
     setLoading(true);
-    const result = await api.scanFolder(path);
-    setTracks(result);
-    setCurrentIndex(-1);
-    setPlaying(false);
-    setLoading(false);
+    setError(null); // Clear any previous errors
+    try {
+      const result = await api.scanFolder(path);
+      setTracks(result);
+      setCurrentIndex(-1);
+      setPlaying(false);
+    } catch (error) {
+      setError(`Failed to load library: ${error.message}`);
+      setTracks([]); // Clear tracks on error
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   const playTrack = useCallback(
     async (track: Track) => {
+      // Find the index of the track optimistically
       const idx = tracks.findIndex((t) => t.path === track.path);
       if (idx < 0) return;
       setCurrentIndex(idx);
-      setPlaying(true);
-      setError(null);
-      await api.play(track.path);
+      setTrackLoading(true);
+      try {
+        await api.play(track.path);
+        setPlaying(true);
+        setError(null);
+      } catch (error) {
+        setError(String(error));
+      } finally {
+        setTrackLoading(false);
+      }
     },
     [tracks],
   );
 
   const playAtIndex = useCallback(async (index: number) => {
-    const track = await api.playIndex(index);
-    if (track) {
-      setCurrentIndex(index);
+    // Check if the index is valid optimistically
+    if (index < 0 || index >= tracks.length) return;
+    setCurrentIndex(index);
+    setTrackLoading(true);
+    try {
+      await api.playIndex(index);
       setPlaying(true);
       setError(null);
+    } catch (error) {
+      setError(String(error));
+    } finally {
+      setTrackLoading(false);
     }
-  }, []);
+  }, [tracks]);
 
   const pause = useCallback(async () => {
     await api.pause();
@@ -68,24 +91,46 @@ export function usePlaylist() {
   }, [playing, pause, resume]);
 
   const next = useCallback(async () => {
-    const track = await api.next();
-    if (track) {
-      const idx = tracks.findIndex((t) => t.path === track.path);
-      if (idx >= 0) setCurrentIndex(idx);
-      setPlaying(true);
-      setError(null);
-    } else {
-      setPlaying(false);
+    setTrackLoading(true);
+    try {
+      const track = await api.next();
+      if (track) {
+        const idx = tracks.findIndex((t) => t.path === track.path);
+        if (idx >= 0) {
+          setCurrentIndex(idx);
+        }
+        setPlaying(true);
+        setError(null);
+      } else {
+        setPlaying(false);
+        setCurrentIndex(-1);
+      }
+    } catch (error) {
+      setError(String(error));
+    } finally {
+      setTrackLoading(false);
     }
   }, [tracks]);
 
   const previous = useCallback(async () => {
-    const track = await api.previous();
-    if (track) {
-      const idx = tracks.findIndex((t) => t.path === track.path);
-      if (idx >= 0) setCurrentIndex(idx);
-      setPlaying(true);
-      setError(null);
+    setTrackLoading(true);
+    try {
+      const track = await api.previous();
+      if (track) {
+        const idx = tracks.findIndex((t) => t.path === track.path);
+        if (idx >= 0) {
+          setCurrentIndex(idx);
+        }
+        setPlaying(true);
+        setError(null);
+      } else {
+        setPlaying(false);
+        setCurrentIndex(-1);
+      }
+    } catch (error) {
+      setError(String(error));
+    } finally {
+      setTrackLoading(false);
     }
   }, [tracks]);
 
@@ -97,9 +142,7 @@ export function usePlaylist() {
   const seek = useCallback(async (pos: number) => {
     await api.seek(pos);
     position.current = pos;
-    if (seekBarRef.current) {
-      seekBarRef.current.value = String(pos);
-    }
+    setPositionValue(pos);
   }, []);
 
   const toggleShuffle = useCallback(async () => {
@@ -135,7 +178,7 @@ export function usePlaylist() {
       if (repeat === "one") {
         await api.seek(0);
         position.current = 0;
-        if (seekBarRef.current) seekBarRef.current.value = "0";
+        setPositionValue(0);
         await api.resume();
         setPlaying(true);
       } else {
@@ -158,13 +201,27 @@ export function usePlaylist() {
   }, []);
 
   // Position polling when playing — updates seek bar DOM directly, zero re-renders
+  // Also updates playing state and current track from backend to stay in sync
   useEffect(() => {
     if (playing) {
       positionInterval.current = setInterval(async () => {
-        const state = await api.getState();
-        position.current = state.position;
-        if (seekBarRef.current) {
-          seekBarRef.current.value = String(state.position);
+        try {
+          const state = await api.getState();
+          position.current = state.position;
+          setPositionValue(state.position);
+          // Update playing state from backend
+          setPlaying(state.playing);
+          // Update current track from backend
+          if (state.current_track) {
+            const idx = tracks.findIndex((t) => t.path === state.current_track);
+            if (idx >= 0) {
+              setCurrentIndex(idx);
+            }
+          } else {
+            setCurrentIndex(-1);
+          }
+        } catch (error) {
+          setError(String(error));
         }
       }, 500);
     } else if (positionInterval.current) {
@@ -174,7 +231,7 @@ export function usePlaylist() {
     return () => {
       if (positionInterval.current) clearInterval(positionInterval.current);
     };
-  }, [playing]);
+  }, [playing, tracks]);
 
   return {
     tracks,
@@ -184,10 +241,11 @@ export function usePlaylist() {
     volume,
     error,
     loading,
+    trackLoading,
     shuffle,
     repeat,
     position,
-    seekBarRef,
+    positionValue,
     loadLibrary,
     playTrack,
     playAtIndex,

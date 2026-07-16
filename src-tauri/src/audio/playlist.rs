@@ -1,3 +1,4 @@
+use rand::seq::SliceRandom;
 use serde::{Deserialize, Serialize};
 
 use crate::audio::track_info::TrackInfo;
@@ -129,13 +130,9 @@ impl PlaylistManager {
     }
 
     fn build_shuffle_order(&mut self) {
-        let len = self.tracks.len();
-        self.shuffle_order = (0..len).collect();
-        // Fisher-Yates shuffle
-        for i in (1..len).rev() {
-            let j = (i as f64 * 1664525.0 + 1013904223.0) as usize % (i + 1);
-            self.shuffle_order.swap(i, j);
-        }
+        let mut rng = rand::rng();
+        self.shuffle_order = (0..self.tracks.len()).collect();
+        self.shuffle_order.shuffle(&mut rng);
         // Ensure current track is first
         if let Some(pos) = self.shuffle_order.iter().position(|&i| i == self.index) {
             self.shuffle_order.swap(0, pos);

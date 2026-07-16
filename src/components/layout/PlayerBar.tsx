@@ -1,5 +1,16 @@
-import { useCallback, useMemo } from "react";
 import type { Track, RepeatMode } from "../../types";
+import { formatTime } from "../../lib/format";
+import { useCoverArt } from "../../lib/useCoverArt";
+import {
+  PlayIcon,
+  PauseIcon,
+  PrevIcon,
+  NextIcon,
+  ShuffleIcon,
+  RepeatIcon,
+  RepeatOneIcon,
+  VolumeIcon,
+} from "../ui/Icons";
 
 interface Props {
   currentTrack: Track | null;
@@ -7,8 +18,7 @@ interface Props {
   volume: number;
   shuffle: boolean;
   repeat: RepeatMode;
-  positionRef: React.RefObject<number>;
-  seekBarRef: React.Ref<HTMLInputElement>;
+  positionValue: number;
   onToggle: () => void;
   onNext: () => void;
   onPrevious: () => void;
@@ -16,12 +26,6 @@ interface Props {
   onSeek: (position: number) => void;
   onToggleShuffle: () => void;
   onCycleRepeat: () => void;
-}
-
-function formatTime(seconds: number): string {
-  const m = Math.floor(seconds / 60);
-  const s = Math.floor(seconds % 60);
-  return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
 const REPEAT_LABELS: Record<RepeatMode, string> = {
@@ -36,8 +40,7 @@ export function PlayerBar({
   volume,
   shuffle,
   repeat,
-  positionRef,
-  seekBarRef,
+  positionValue,
   onToggle,
   onNext,
   onPrevious,
@@ -47,20 +50,22 @@ export function PlayerBar({
   onCycleRepeat,
 }: Props) {
   const duration = currentTrack?.duration ?? 0;
-  const durationLabel = useMemo(() => formatTime(duration), [duration]);
-
-  const handleSeek = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => onSeek(parseFloat(e.target.value)),
-    [onSeek],
-  );
+  const coverUrl = useCoverArt(currentTrack?.path);
 
   return (
     <div className="player-bar">
       <div className="player-bar__track">
         {currentTrack ? (
           <>
-            <span className="player-bar__title">{currentTrack.title}</span>
-            <span className="player-bar__artist">{currentTrack.artist}</span>
+            {coverUrl ? (
+              <img src={coverUrl} alt={`${currentTrack.title} album art`} className="player-bar__art" />
+            ) : (
+              <div className="player-bar__art player-bar__art--empty"><span style={{fontSize:18}}>&#9835;</span></div>
+            )}
+            <div className="player-bar__track-info">
+              <div className="player-bar__title">{currentTrack.title}</div>
+              <div className="player-bar__artist">{currentTrack.artist}</div>
+            </div>
           </>
         ) : (
           <span className="player-bar__empty">No track playing</span>
@@ -74,47 +79,53 @@ export function PlayerBar({
             className={`player-bar__btn player-bar__btn--icon ${shuffle ? "player-bar__btn--active" : ""}`}
             aria-label="Toggle shuffle"
           >
-            S
+            <ShuffleIcon />
           </button>
-          <button onClick={onPrevious} className="player-bar__btn" aria-label="Previous track">
-            Prev
+          <button onClick={onPrevious} className="player-bar__btn player-bar__btn--icon" aria-label="Previous track">
+            <PrevIcon />
           </button>
           <button
             onClick={onToggle}
-            className="player-bar__btn player-bar__btn--main"
+            className={`player-bar__btn player-bar__btn--play ${playing ? "player-bar__btn--play--active" : ""}`}
             aria-label={playing ? "Pause" : "Play"}
           >
-            {playing ? "Pause" : "Play"}
+            {playing ? <PauseIcon size={20} /> : <PlayIcon size={20} />}
           </button>
-          <button onClick={onNext} className="player-bar__btn" aria-label="Next track">
-            Next
+          <button onClick={onNext} className="player-bar__btn player-bar__btn--icon" aria-label="Next track">
+            <NextIcon />
           </button>
           <button
             onClick={onCycleRepeat}
             className={`player-bar__btn player-bar__btn--icon ${repeat !== "off" ? "player-bar__btn--active" : ""}`}
             aria-label={REPEAT_LABELS[repeat]}
           >
-            {repeat === "one" ? "R1" : "R"}
+            {repeat === "one" ? <RepeatOneIcon /> : <RepeatIcon />}
           </button>
         </div>
         <div className="player-bar__seek-row">
-          <span className="player-bar__time">{formatTime(positionRef.current ?? 0)}</span>
-          <input
-            ref={seekBarRef}
-            type="range"
-            min={0}
-            max={duration || 1}
-            step={0.1}
-            defaultValue="0"
-            onChange={handleSeek}
-            className="player-bar__seek"
-            aria-label="Seek position"
-          />
-          <span className="player-bar__time">{durationLabel}</span>
+          <span className="player-bar__time">{formatTime(positionValue)}</span>
+          <div className="player-bar__seek-container" onClick={(e) => {
+            const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+            const percent = Math.min(Math.max((e.clientX - rect.left) / rect.width, 0), 1);
+            onSeek(percent * (duration || 1));
+          }}>
+            <input
+              type="range"
+              min="0"
+              max="100"
+              step="1"
+              value={(positionValue / (duration || 1)) * 100}
+              onChange={(e) => onSeek(parseFloat(e.target.value) / 100 * (duration || 1))}
+              className="player-bar__seek"
+              aria-label="Seek position"
+            />
+          </div>
+          <span className="player-bar__time">{formatTime(duration)}</span>
         </div>
       </div>
 
       <div className="player-bar__volume">
+        <VolumeIcon size={16} className="player-bar__volume-icon" />
         <input
           type="range"
           min={0}

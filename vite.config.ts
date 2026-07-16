@@ -7,10 +7,10 @@ export default defineConfig(async () => ({
   plugins: [react()],
   clearScreen: false,
   server: {
-    port: 1420,
+    port: 5173,
     strictPort: true,
     host: host || false,
-    hmr: host ? { protocol: "ws", host, port: 1421 } : undefined,
+    hmr: host ? { protocol: "ws", host, port: 1422 } : undefined,
     watch: {
       ignored: ["**/src-tauri/**", "**/*.exe", "**/*.dll"],
     },

@@ -8,6 +8,7 @@ export function useMode() {
     setMode((prev) => {
       if (prev === "normal") return "flow";
       if (prev === "flow") return "zen";
+      if (prev === "zen") return "mini";
       return "normal";
     });
   }, []);

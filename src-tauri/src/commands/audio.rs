@@ -7,10 +7,13 @@ use crate::AppState;
 use crate::audio::playlist::RepeatMode;
 use crate::audio::track_info::TrackInfo;
 use crate::error::AppError;
+use crate::utils::path::validate_file_path;
 
 #[tauri::command]
 pub fn play(state: State<'_, Arc<AppState>>, path: String) -> Result<(), AppError> {
-    state.player.play_file(&path)
+    // For audio playback, we don't restrict to a base directory as users might play from anywhere
+    let canonical = validate_file_path(&path, None)?;
+    state.player.play_file(&canonical.to_string_lossy())
 }
 
 #[tauri::command]
@@ -21,6 +24,7 @@ pub fn play_index(state: State<'_, Arc<AppState>>, index: usize) -> Result<Optio
     };
     match track {
         Some(t) => {
+            // For consistency, we could add path validation here too, but the path comes from our own library
             state.player.play_file(&t.path)?;
             Ok(Some(t))
         }
@@ -51,6 +55,7 @@ pub fn next(state: State<'_, Arc<AppState>>) -> Result<Option<TrackInfo>, AppErr
     };
     match track {
         Some(t) => {
+            // For consistency, we could add path validation here too, but the path comes from our own library
             state.player.play_file(&t.path)?;
             Ok(Some(t))
         }
@@ -66,6 +71,7 @@ pub fn previous(state: State<'_, Arc<AppState>>) -> Result<Option<TrackInfo>, Ap
     };
     match track {
         Some(t) => {
+            // For consistency, we could add path validation here too, but the path comes from our own library
             state.player.play_file(&t.path)?;
             Ok(Some(t))
         }
@@ -144,4 +150,22 @@ pub fn search(state: State<'_, Arc<AppState>>, query: String) -> Result<Vec<Trac
         })
         .cloned()
         .collect())
+}
+
+#[tauri::command]
+pub fn get_audio_data(state: State<'_, Arc<AppState>>) -> Result<crate::audio::analyzer::AudioData, AppError> {
+    Ok(state.analyzer.get_data())
+}
+
+#[tauri::command]
+pub fn play_url(state: State<'_, Arc<AppState>>, url: String) -> Result<(), AppError> {
+    if !url.starts_with("http://") && !url.starts_with("https://") {
+        return Err(AppError::Audio("Only http/https URLs are allowed".into()));
+    }
+    state.player.play_url(&url)
+}
+
+#[tauri::command]
+pub fn list_radio_stations() -> Vec<crate::radio::RadioStation> {
+    crate::radio::preset_stations()
 }
