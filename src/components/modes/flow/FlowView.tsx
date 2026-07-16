@@ -13,9 +13,10 @@ interface Props {
   position: number;
   onSelect: (track: Track) => void;
   loading?: boolean;
+  scanProgress?: { processed: number; found: number } | null;
 }
 
-export function FlowView({ tracks, currentTrack, playing, position, onSelect, loading }: Props) {
+export function FlowView({ tracks, currentTrack, playing, position, onSelect, loading, scanProgress }: Props) {
   return (
     <div className="flow-view">
       <div className="flow-view__top">
@@ -23,7 +24,7 @@ export function FlowView({ tracks, currentTrack, playing, position, onSelect, lo
         <Visualizer playing={playing} />
       </div>
       <div className="flow-view__tracks">
-        <TrackList tracks={tracks} currentTrack={currentTrack} onSelect={onSelect} loading={loading} />
+        <TrackList tracks={tracks} currentTrack={currentTrack} onSelect={onSelect} loading={loading} scanProgress={scanProgress} />
       </div>
       <div className="flow-view__bottom">
         <div className="flow-view__lyrics-col">

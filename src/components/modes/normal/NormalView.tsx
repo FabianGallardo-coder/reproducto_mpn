@@ -9,9 +9,10 @@ interface Props {
   currentTrack: Track | null;
   onSelect: (track: Track) => void;
   loading?: boolean;
+  scanProgress?: { processed: number; found: number } | null;
 }
 
-export function NormalView({ tracks, currentTrack, onSelect, loading }: Props) {
+export function NormalView({ tracks, currentTrack, onSelect, loading, scanProgress }: Props) {
   const coverUrl = useCoverArt(currentTrack?.path);
   const compact = tracks.length > 0 && tracks.length < 10;
 
@@ -22,7 +23,7 @@ export function NormalView({ tracks, currentTrack, onSelect, loading }: Props) {
           <h2>Library</h2>
           <span>{tracks.length} tracks</span>
         </div>
-        <TrackList tracks={tracks} currentTrack={currentTrack} onSelect={onSelect} loading={loading} />
+        <TrackList tracks={tracks} currentTrack={currentTrack} onSelect={onSelect} loading={loading} scanProgress={scanProgress} />
       </div>
       <div className="normal-view__now-playing">
         {coverUrl ? (

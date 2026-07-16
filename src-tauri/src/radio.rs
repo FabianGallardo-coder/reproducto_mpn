@@ -4,6 +4,8 @@ use std::sync::{mpsc, Arc, Mutex};
 
 use serde::{Deserialize, Serialize};
 
+use crate::lyrics::http_client;
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RadioStation {
     pub name: String,
@@ -203,31 +205,44 @@ impl StreamReader {
         let shared = Arc::new(Mutex::new(RingBuffer::new(2 * 1024 * 1024)));
         let url = url.to_string();
 
-        std::thread::Builder::new()
-            .name("radio-stream".into())
-            .spawn(move || {
-                let client = match reqwest::blocking::Client::builder()
-                    .timeout(None)
-                    .build() {
-                    Ok(c) => c,
-                    Err(_) => return,
-                };
-                let mut resp = match client.get(&url).send() {
+        // Async downloader: uses reqwest (non-blocking) and feeds the synchronous
+        // RingBuffer that rodio's Decoder reads from. This keeps the network off
+        // the IPC and audio-engine threads.
+        // ponytail: 3 retries with 1s/2s backoff — covers brief network blips
+        // without blocking the audio thread indefinitely.
+        tauri::async_runtime::spawn(async move {
+            const MAX_ATTEMPTS: u32 = 3;
+            for attempt in 0..MAX_ATTEMPTS {
+                if attempt > 0 {
+                    let backoff = std::time::Duration::from_millis(1000 * attempt as u64);
+                    tokio::time::sleep(backoff).await;
+                }
+                let resp = match http_client().get(&url).send().await {
                     Ok(r) => r,
-                    Err(_) => return,
+                    Err(_) => continue,
                 };
-                let mut buf = [0u8; 8192];
-                loop {
-                    match resp.read(&mut buf) {
-                        Ok(0) => break,
-                        Ok(n) => {
-                            let _ = tx.send(buf[..n].to_vec());
+                let mut stream = resp.bytes_stream();
+                use futures_util::StreamExt;
+                let mut stream_error = false;
+                while let Some(chunk) = stream.next().await {
+                    match chunk {
+                        Ok(bytes) => {
+                            if tx.send(bytes.to_vec()).is_err() {
+                                return;
+                            }
                         }
-                        Err(_) => break,
+                        Err(_) => {
+                            stream_error = true;
+                            break;
+                        }
                     }
                 }
-            })
-            .ok();
+                if !stream_error {
+                    return;
+                }
+                // Stream broke mid-flight, retry.
+            }
+        });
 
         Self { rx: Mutex::new(rx), shared, pos: 0 }
     }

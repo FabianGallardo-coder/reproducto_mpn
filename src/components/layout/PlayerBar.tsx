@@ -1,6 +1,7 @@
-import type { Track, RepeatMode } from "../../types";
 import { formatTime } from "../../lib/format";
 import { useCoverArt } from "../../lib/useCoverArt";
+import { usePlayerState, usePlayerActions } from "../../hooks/usePlayerStore";
+import type { RepeatMode } from "../../types";
 import {
   PlayIcon,
   PauseIcon,
@@ -12,43 +13,31 @@ import {
   VolumeIcon,
 } from "../ui/Icons";
 
-interface Props {
-  currentTrack: Track | null;
-  playing: boolean;
-  volume: number;
-  shuffle: boolean;
-  repeat: RepeatMode;
-  positionValue: number;
-  onToggle: () => void;
-  onNext: () => void;
-  onPrevious: () => void;
-  onVolumeChange: (v: number) => void;
-  onSeek: (position: number) => void;
-  onToggleShuffle: () => void;
-  onCycleRepeat: () => void;
-}
-
 const REPEAT_LABELS: Record<RepeatMode, string> = {
   off: "Repeat off",
   all: "Repeat all",
   one: "Repeat one",
 };
 
-export function PlayerBar({
-  currentTrack,
-  playing,
-  volume,
-  shuffle,
-  repeat,
-  positionValue,
-  onToggle,
-  onNext,
-  onPrevious,
-  onVolumeChange,
-  onSeek,
-  onToggleShuffle,
-  onCycleRepeat,
-}: Props) {
+export function PlayerBar() {
+  const {
+    currentTrack,
+    playing,
+    volume,
+    shuffle,
+    repeat,
+    positionValue,
+  } = usePlayerState();
+  const {
+    toggle,
+    next,
+    previous,
+    setVolume,
+    seek,
+    toggleShuffle,
+    cycleRepeat,
+  } = usePlayerActions();
+
   const duration = currentTrack?.duration ?? 0;
   const coverUrl = useCoverArt(currentTrack?.path);
 
@@ -75,27 +64,27 @@ export function PlayerBar({
       <div className="player-bar__center">
         <div className="player-bar__controls">
           <button
-            onClick={onToggleShuffle}
+            onClick={toggleShuffle}
             className={`player-bar__btn player-bar__btn--icon ${shuffle ? "player-bar__btn--active" : ""}`}
             aria-label="Toggle shuffle"
           >
             <ShuffleIcon />
           </button>
-          <button onClick={onPrevious} className="player-bar__btn player-bar__btn--icon" aria-label="Previous track">
+          <button onClick={previous} className="player-bar__btn player-bar__btn--icon" aria-label="Previous track">
             <PrevIcon />
           </button>
           <button
-            onClick={onToggle}
+            onClick={toggle}
             className={`player-bar__btn player-bar__btn--play ${playing ? "player-bar__btn--play--active" : ""}`}
             aria-label={playing ? "Pause" : "Play"}
           >
             {playing ? <PauseIcon size={20} /> : <PlayIcon size={20} />}
           </button>
-          <button onClick={onNext} className="player-bar__btn player-bar__btn--icon" aria-label="Next track">
+          <button onClick={next} className="player-bar__btn player-bar__btn--icon" aria-label="Next track">
             <NextIcon />
           </button>
           <button
-            onClick={onCycleRepeat}
+            onClick={cycleRepeat}
             className={`player-bar__btn player-bar__btn--icon ${repeat !== "off" ? "player-bar__btn--active" : ""}`}
             aria-label={REPEAT_LABELS[repeat]}
           >
@@ -107,7 +96,7 @@ export function PlayerBar({
           <div className="player-bar__seek-container" onClick={(e) => {
             const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
             const percent = Math.min(Math.max((e.clientX - rect.left) / rect.width, 0), 1);
-            onSeek(percent * (duration || 1));
+            seek(percent * (duration || 1));
           }}>
             <input
               type="range"
@@ -115,7 +104,7 @@ export function PlayerBar({
               max="100"
               step="1"
               value={(positionValue / (duration || 1)) * 100}
-              onChange={(e) => onSeek(parseFloat(e.target.value) / 100 * (duration || 1))}
+              onChange={(e) => seek(parseFloat(e.target.value) / 100 * (duration || 1))}
               className="player-bar__seek"
               aria-label="Seek position"
             />
@@ -132,7 +121,7 @@ export function PlayerBar({
           max={1}
           step={0.01}
           value={volume}
-          onChange={(e) => onVolumeChange(parseFloat(e.target.value))}
+          onChange={(e) => setVolume(parseFloat(e.target.value))}
           className="player-bar__slider"
           aria-label="Volume"
         />

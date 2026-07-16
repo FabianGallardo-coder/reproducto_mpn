@@ -57,4 +57,16 @@ describe("RadioPanel", () => {
     });
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
   });
+
+  it("disables stations and shows banner when offline", async () => {
+    Object.defineProperty(navigator, "onLine", { configurable: true, value: false });
+    window.dispatchEvent(new Event("offline"));
+    render(<RadioPanel onPlay={vi.fn()} />);
+    await waitFor(() => screen.getByText(/offline/i));
+    const buttons = screen.getAllByRole("button");
+    expect(buttons.length).toBeGreaterThan(0);
+    buttons.forEach((btn) => expect(btn).toBeDisabled());
+    Object.defineProperty(navigator, "onLine", { configurable: true, value: true });
+    window.dispatchEvent(new Event("online"));
+  });
 });

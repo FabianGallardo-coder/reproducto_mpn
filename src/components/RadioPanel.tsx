@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { api, type RadioStation } from "../lib/api";
+import { useOnlineStatus } from "../hooks/useOnlineStatus";
 
 interface Props {
   onPlay: (url: string) => void;
@@ -9,6 +10,7 @@ export function RadioPanel({ onPlay }: Props) {
   const [stations, setStations] = useState<RadioStation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const { isOnline } = useOnlineStatus();
 
   useEffect(() => {
     api.listRadioStations().then((s) => {
@@ -38,6 +40,11 @@ export function RadioPanel({ onPlay }: Props) {
   return (
     <div className="radio-panel">
       <h3 className="radio-panel__title">Radio</h3>
+      {!isOnline && (
+        <div className="radio-panel__offline" role="status" aria-live="polite">
+          You are offline. Radio streams are unavailable.
+        </div>
+      )}
       <ul className="radio-panel__list">
         {stations.map((s, index) => (
           <li key={`${s.url}-${index}`} className="radio-panel__item">
@@ -45,6 +52,8 @@ export function RadioPanel({ onPlay }: Props) {
               className="radio-panel__station"
               onClick={() => handlePlay(s)}
               title={s.description}
+              disabled={!isOnline}
+              aria-disabled={!isOnline}
             >
               <span className="radio-panel__name">{s.name}</span>
               <span className="radio-panel__genre">{s.genre}</span>

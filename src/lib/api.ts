@@ -1,4 +1,4 @@
-import { invoke } from "@tauri-apps/api/core";
+import { invoke, Channel } from "@tauri-apps/api/core";
 import type { Track, AppConfig, PlaybackState, RepeatMode } from "../types";
 
 export interface AudioData {
@@ -10,6 +10,12 @@ export interface RadioStation {
   genre: string;
   url: string;
   description: string;
+}
+
+export interface ScanProgress {
+  processed: number;
+  found: number;
+  current: string;
 }
 
 export interface YouTubeMeta {
@@ -41,7 +47,11 @@ export const api = {
   getPlaylist: () => invoke<Track[]>("get_playlist"),
   setPlaylist: (tracks: Track[], index: number) =>
     invoke<void>("set_playlist", { tracks, index }),
-  scanFolder: (path: string) => invoke<Track[]>("scan_folder", { path }),
+  scanFolder: (path: string, onProgress?: (p: ScanProgress) => void) => {
+    const channel = new Channel<ScanProgress>();
+    if (onProgress) channel.onmessage = onProgress;
+    return invoke<Track[]>("scan_folder", { path, onProgress: channel });
+  },
   getConfig: () => invoke<AppConfig>("get_config"),
   setConfig: (config: AppConfig) => invoke<void>("set_config", { config }),
   setShuffle: (on: boolean) => invoke<void>("set_shuffle", { on }),

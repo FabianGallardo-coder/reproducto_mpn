@@ -78,7 +78,22 @@ Este informe técnico documenta todos los errores, vulnerabilidades, cuellos de 
 
 ## 🛠️ Checklist Técnico para Refactorización (Claude Code)
 
-- [ ] **1. Async Rust Refactor**: Cambiar hilos bloqueantes de `walkdir` y `reqwest` en `src-tauri` a firmas asíncronas (`async/await`) utilizando `tokio`.
-- [ ] **2. Scan Progress Channel**: Configurar `tauri::ipc::Channel` o emitir eventos periódicos durante el escaneo de directorios masivos.
-- [ ] **3. Resilience Wrapper**: Crear un manejador seguro en `audio/` para capturar errores de decodificación de `rodio` e informar de manera síncrona a la interfaz.
-- [ ] **4. Zustand Migration**: Encapsular el estado de reproducción del frontend en un store unificado, aliviando la complejidad en `AppLayout.tsx`.
+- [x] **1. Async Rust Refactor**: Cambiar hilos bloqueantes de `walkdir` y `reqwest` en `src-tauri` a firmas asíncronas (`async/await`) utilizando `tokio`.
+- [x] **2. Scan Progress Channel**: Configurar `tauri::ipc::Channel` o emitir eventos periódicos durante el escaneo de directorios masivos.
+- [x] **3. Resilience Wrapper**: Crear un manejador seguro en `audio/` para capturar errores de decodificación de `rodio` e informar de manera síncrona a la interfaz.
+- [x] **4. State Management Migration**: Encapsular el estado de reproducción del frontend en un store unificado (Context API con dos contexts state/actions), aliviando la complejidad en `AppLayout.tsx`.
+
+### Estado de implementación (2026-07-16)
+
+| # | Hallazgo | Severidad | Estado | Notas |
+|---|----------|-----------|--------|-------|
+| 1.1 | Scan síncrono bloqueante | Alta | ✅ Resuelto | `spawn_blocking` + `Channel<ScanProgress>` |
+| 1.2 | `reqwest` blocking | Alta | ✅ Resuelto | feature removida, `bytes_stream()` + 3 reintentos |
+| 1.3 | YouTube stream frágil | Alta | ⏸ Diferido | requiere infra de firma dinámica fuera de scope |
+| 2.1 | Sin reintento ni offline | Media | ✅ Resuelto | `useOnlineStatus` + radio retry/backoff + UI |
+| 2.2 | Parseo lofty frágil | Media | ✅ Resuelto | `match` por archivo, fallback con metadatos genéricos |
+| 2.3 | Sin validación de config | Media | ✅ Resuelto | `ConfigStore::load` con fallback + reescritura |
+| 3.1 | Prop drilling | Baja | ✅ Resuelto | `usePlayerStore` con dos contexts |
+| 3.2 | Sin caché de carátulas | Baja | ✅ Resuelto | `app_cache_dir/covers/<hash>.bin` |
+
+**Verificación final**: `tsc --noEmit` 0 · `cargo clippy --lib` limpio · `cargo test --lib` 17/17 · `npx vitest run` 130/130.

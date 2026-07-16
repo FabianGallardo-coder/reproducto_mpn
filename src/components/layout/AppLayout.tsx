@@ -1,29 +1,15 @@
 import { useState } from "react";
-import type { Mode, Track, RepeatMode } from "../../types";
+import type { Mode } from "../../types";
 import { Sidebar } from "./Sidebar";
 import { PlayerBar } from "./PlayerBar";
 import { RadioPanel } from "../RadioPanel";
 import { YouTubePanel } from "../YouTubePanel";
 import { api } from "../../lib/api";
+import { usePlayerState, usePlayerActions } from "../../hooks/usePlayerStore";
 
 interface Props {
   mode: Mode;
   onModeChange: (mode: Mode) => void;
-  currentTrack: Track | null;
-  playing: boolean;
-  volume: number;
-  shuffle: boolean;
-  repeat: RepeatMode;
-  positionValue: number;
-  error: string | null;
-  onToggle: () => void;
-  onNext: () => void;
-  onPrevious: () => void;
-  onVolumeChange: (v: number) => void;
-  onSeek: (position: number) => void;
-  onToggleShuffle: () => void;
-  onCycleRepeat: () => void;
-  onClearError: () => void;
   onSearch?: (query: string) => void;
   children: React.ReactNode;
 }
@@ -31,25 +17,12 @@ interface Props {
 export function AppLayout({
   mode,
   onModeChange,
-  currentTrack,
-  playing,
-  volume,
-  shuffle,
-  repeat,
-  positionValue,
-  error,
-  onToggle,
-  onNext,
-  onPrevious,
-  onVolumeChange,
-  onSeek,
-  onToggleShuffle,
-  onCycleRepeat,
-  onClearError,
   onSearch,
   children,
 }: Props) {
   const [sidebarTab, setSidebarTab] = useState<"library" | "radio" | "youtube">("library");
+  const { error } = usePlayerState();
+  const { clearError } = usePlayerActions();
 
   const handlePlayUrl = (url: string) => {
     api.playUrl(url).catch(() => {});
@@ -62,7 +35,7 @@ export function AppLayout({
     return (
       <div key={layoutKey} className={`layout layout--${mode}`}>
         {error && (
-          <div className="error-toast" onClick={onClearError}>
+          <div className="error-toast" onClick={clearError}>
             {error}
           </div>
         )}
@@ -74,7 +47,7 @@ export function AppLayout({
   return (
     <div key={layoutKey} className={`layout layout--${mode}`}>
       {error && (
-        <div className="error-toast" onClick={onClearError}>
+        <div className="error-toast" onClick={clearError}>
           {error}
         </div>
       )}
@@ -106,21 +79,7 @@ export function AppLayout({
         ) : null}
       </Sidebar>
       <main className="layout__main">{children}</main>
-      <PlayerBar
-        currentTrack={currentTrack}
-        playing={playing}
-        volume={volume}
-        shuffle={shuffle}
-        repeat={repeat}
-        positionValue={positionValue}
-        onToggle={onToggle}
-        onNext={onNext}
-        onPrevious={onPrevious}
-        onVolumeChange={onVolumeChange}
-        onSeek={onSeek}
-        onToggleShuffle={onToggleShuffle}
-        onCycleRepeat={onCycleRepeat}
-      />
+      <PlayerBar />
     </div>
   );
 }

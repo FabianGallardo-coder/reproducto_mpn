@@ -34,7 +34,7 @@ FlowPlayer es un reproductor multimedia construido con Tauri 2.0, Rust y React 1
   - Tipado estricto de TypeScript (sin `any`).
   - Manejo adecuado de errores en Rust (sin `unwrap`/`expect`).
   - Caché eficiente de metadata con base de datos embebida `sled`.
-- **Pruebas**: 13 tests frontend (vitest) + 17 tests backend (Rust) + Playwright QA.
+- **Pruebas**: 130 tests frontend (vitest) + 17 tests backend (Rust) + Playwright QA.
 - **QA Skills**: `frontend-audit` (análisis de código) + `frontend-qa` (testing visual con Playwright), con registries persistentes en `.opencode/registries/`.
 
 ## Estructura del proyecto
@@ -54,7 +54,7 @@ src/
   │   ├── PomodoroTimer.tsx    # Focus timer
   │   ├── RadioPanel.tsx       # SomaFM stations
   │   └── ErrorBoundary.tsx    # React error boundary
-  ├── hooks/                   # usePlaylist, useMode, useShortcuts, useMediaSession
+  ├── hooks/                   # usePlayerStore (Context), useMode, useShortcuts, useMediaSession, useOnlineStatus, useCoverArt
   ├── lib/
   │   ├── api.ts               # Tauri IPC wrappers (typed invoke calls)
   │   └── events.ts            # Event name constants
@@ -164,3 +164,17 @@ Este proyecto está licenciado bajo los términos de la licencia MIT. Consulta e
 
 ---  
 *FlowPlayer – Enfócate en la música, no en la interfaz.*
+
+## Estado actual (sesión 2026-07-16)
+
+QA/QC del informe [`qa-qc-report.md`](./qa-qc-report.md) completado:
+
+- **1.1 Scan async + canal de progreso** — `scan_folder` ahora `async` con `tauri::async_runtime::spawn_blocking` y `Channel<ScanProgress>`; emite progreso cada 25 archivos (`is_multiple_of`).
+- **1.2 reqwest async** — eliminada la feature `blocking`; radio/lyrics usan `bytes_stream()` + `tokio::time::sleep` para reintentos.
+- **2.1 Resiliencia radio + offline** — `useOnlineStatus` (navigator.onLine + listeners `online`/`offline`); `RadioPanel` deshabilita estaciones y muestra banner cuando está offline; reintentos 3x con backoff en `StreamReader`.
+- **2.2 Parseo defensivo lofty** — errores por archivo se registran con `log::warn` y el escaneo continúa con metadatos genéricos.
+- **2.3 Config robusta** — `ConfigStore::load` ahora hace fallback a defaults + reescritura si el JSON está corrupto o el archivo está vacío (con tests).
+- **3.1 Estado global** — migrado de `usePlaylist` (prop drilling) a `usePlayerStore` con dos contexts separados (`usePlayerState` + `usePlayerActions`) para evitar re-renders innecesarios. `App`, `AppLayout`, `PlayerBar` consumen del context, sin prop drilling.
+- **3.2 Caché de carátulas** — `get_cover` ahora persiste en `<app_cache_dir>/covers/<hash>.bin` con `DefaultHasher`.
+
+Verificación final: `tsc --noEmit` 0 errores · `cargo clippy --lib` limpio · `cargo test --lib` 17/17 · `npx vitest run` 130/130.

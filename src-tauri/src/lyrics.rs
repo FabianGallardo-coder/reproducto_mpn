@@ -13,7 +13,16 @@ pub struct LrcLyrics {
     pub synced_lyrics: Option<String>,
 }
 
-pub fn fetch_lyrics(
+// ponytail: global client, per-request timeouts if needed. Cheap to clone (Arc internally).
+pub fn http_client() -> reqwest::Client {
+    reqwest::Client::builder()
+        .timeout(Duration::from_secs(10))
+        .user_agent("FlowPlayer/0.1")
+        .build()
+        .unwrap_or_else(|_| reqwest::Client::new())
+}
+
+pub async fn fetch_lyrics(
     artist: &str,
     track: &str,
     album: Option<&str>,
@@ -31,13 +40,10 @@ pub fn fetch_lyrics(
         url.push_str(&format!("&duration={d}"));
     }
 
-    let client = reqwest::blocking::Client::builder()
-        .timeout(Duration::from_secs(10))
-        .build()
-        .map_err(|e| format!("Failed to create HTTP client: {e}"))?;
-
-    let resp = client.get(&url)
+    let resp = http_client()
+        .get(&url)
         .send()
+        .await
         .map_err(|e| format!("LRCLib request failed: {e}"))?;
 
     if resp.status().as_u16() == 404 {
@@ -48,5 +54,6 @@ pub fn fetch_lyrics(
     }
 
     resp.json::<LrcLyrics>()
+        .await
         .map_err(|e| format!("Failed to parse LRCLib response: {e}"))
 }

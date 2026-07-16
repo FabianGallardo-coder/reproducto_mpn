@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { api } from "./lib/api";
-import { usePlaylist } from "./hooks/usePlaylist";
+import { usePlayerStore } from "./hooks/usePlayerStore";
 import { useMode } from "./hooks/useMode";
 import { useShortcuts } from "./hooks/useShortcuts";
 import { useMediaSession } from "./hooks/useMediaSession";
@@ -15,33 +15,33 @@ import { ZenView } from "./components/modes/zen/ZenView";
 import { MiniView } from "./components/modes/mini/MiniView";
 
 function App() {
-  const playlist = usePlaylist();
+  const player = usePlayerStore();
   const { mode, setMode, cycleMode } = useMode();
   const [musicFolder, setMusicFolder] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const bgCoverUrl = useCoverArt(playlist.currentTrack?.path);
+  const bgCoverUrl = useCoverArt(player.currentTrack?.path);
 
   useEffect(() => {
     getCurrentWindow().show();
     api.getConfig().then((c) => {
       setMusicFolder(c.music_folder);
       api.setVolume(c.volume);
-      playlist.setShuffle(c.shuffle);
-      playlist.setRepeat(c.repeat ?? "off");
-      playlist.loadLibrary(c.music_folder);
+      player.setShuffle(c.shuffle);
+      player.setRepeat(c.repeat ?? "off");
+      player.loadLibrary(c.music_folder);
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const filteredTracks = useMemo(() => {
-    if (!searchQuery.trim()) return playlist.tracks;
+    if (!searchQuery.trim()) return player.tracks;
     const q = searchQuery.toLowerCase();
-    return playlist.tracks.filter(
+    return player.tracks.filter(
       (t) =>
         t.title.toLowerCase().includes(q) ||
         t.artist.toLowerCase().includes(q) ||
         t.album.toLowerCase().includes(q),
     );
-  }, [playlist.tracks, searchQuery]);
+  }, [player.tracks, searchQuery]);
 
   const handleSelectFolder = useCallback(async () => {
     try {
@@ -49,13 +49,13 @@ function App() {
       if (typeof selected === "string") {
         setMusicFolder(selected);
         // Show loading state while loading library
-        await playlist.loadLibrary(selected);
+        await player.loadLibrary(selected);
         // Wait for library to load before saving config
         await api.setConfig({
           music_folder: selected,
-          volume: playlist.volume,
-          shuffle: playlist.shuffle,
-          repeat: playlist.repeat,
+          volume: player.volume,
+          shuffle: player.shuffle,
+          repeat: player.repeat,
           last_track_index: null,
           last_position: 0,
         });
@@ -65,10 +65,10 @@ function App() {
       console.error("Failed to select folder:", error);
       // Optionally set an error state in the playlist hook if needed
     }
-  }, [playlist.volume, playlist.shuffle, playlist.repeat, playlist.loadLibrary]);
+  }, [player.volume, player.shuffle, player.repeat, player.loadLibrary]);
 
   useShortcuts([
-    { key: "Space", action: playlist.toggle, description: "Play/Pause" },
+    { key: "Space", action: player.toggle, description: "Play/Pause" },
     {
       key: "KeyN",
       alt: true,
@@ -97,49 +97,49 @@ function App() {
     {
       key: "ArrowRight",
       ctrl: true,
-      action: playlist.next,
+      action: player.next,
       description: "Next track",
     },
     {
       key: "ArrowLeft",
       ctrl: true,
-      action: playlist.previous,
+      action: player.previous,
       description: "Previous track",
     },
     {
       key: "ArrowUp",
       ctrl: true,
       action: () =>
-        playlist.setVolume(Math.min(1, playlist.volume + 0.05)),
+        player.setVolume(Math.min(1, player.volume + 0.05)),
       description: "Volume up",
     },
     {
       key: "ArrowDown",
       ctrl: true,
       action: () =>
-        playlist.setVolume(Math.max(0, playlist.volume - 0.05)),
+        player.setVolume(Math.max(0, player.volume - 0.05)),
       description: "Volume down",
     },
     { key: "KeyO", ctrl: true, action: handleSelectFolder, description: "Open folder" },
-    { key: "KeyS", action: playlist.toggleShuffle, description: "Toggle shuffle" },
-    { key: "KeyR", action: playlist.cycleRepeat, description: "Cycle repeat" },
+    { key: "KeyS", action: player.toggleShuffle, description: "Toggle shuffle" },
+    { key: "KeyR", action: player.cycleRepeat, description: "Cycle repeat" },
   ]);
 
   const mediaActions = useMemo(
     () => ({
-      onPlay: playlist.resume,
-      onPause: playlist.pause,
-      onNext: playlist.next,
-      onPrevious: playlist.previous,
-      onSeek: playlist.seek,
+      onPlay: player.resume,
+      onPause: player.pause,
+      onNext: player.next,
+      onPrevious: player.previous,
+      onSeek: player.seek,
     }),
-    [playlist.resume, playlist.pause, playlist.next, playlist.previous, playlist.seek],
+    [player.resume, player.pause, player.next, player.previous, player.seek],
   );
 
   useMediaSession(
-    playlist.currentTrack,
-    playlist.playing,
-    playlist.position.current,
+    player.currentTrack,
+    player.playing,
+    player.positionRef.current,
     mediaActions,
   );
 
@@ -149,34 +149,35 @@ function App() {
         return (
           <FlowView
             tracks={filteredTracks}
-            currentTrack={playlist.currentTrack}
-            playing={playlist.playing}
-            position={playlist.positionValue}
-            onSelect={playlist.playTrack}
-            loading={playlist.loading}
+            currentTrack={player.currentTrack}
+            playing={player.playing}
+            position={player.positionValue}
+            onSelect={player.playTrack}
+            loading={player.loading}
+            scanProgress={player.scanProgress}
           />
         );
       case "zen":
         return (
           <ZenView
-            currentTrack={playlist.currentTrack}
-            playing={playlist.playing}
+            currentTrack={player.currentTrack}
+            playing={player.playing}
             onExit={() => setMode("normal")}
-            onToggle={playlist.toggle}
-            onNext={playlist.next}
-            onPrevious={playlist.previous}
+            onToggle={player.toggle}
+            onNext={player.next}
+            onPrevious={player.previous}
           />
         );
       case "mini":
         return (
           <MiniView
-            currentTrack={playlist.currentTrack}
-            playing={playlist.playing}
-            positionValue={playlist.positionValue}
-            onToggle={playlist.toggle}
-            onNext={playlist.next}
-            onPrevious={playlist.previous}
-            onSeek={playlist.seek}
+            currentTrack={player.currentTrack}
+            playing={player.playing}
+            positionValue={player.positionValue}
+            onToggle={player.toggle}
+            onNext={player.next}
+            onPrevious={player.previous}
+            onSeek={player.seek}
             onExpand={() => setMode("normal")}
           />
         );
@@ -184,9 +185,10 @@ function App() {
         return (
           <NormalView
             tracks={filteredTracks}
-            currentTrack={playlist.currentTrack}
-            onSelect={playlist.playTrack}
-            loading={playlist.loading}
+            currentTrack={player.currentTrack}
+            onSelect={player.playTrack}
+            loading={player.loading}
+            scanProgress={player.scanProgress}
           />
         );
     }
@@ -200,21 +202,6 @@ function App() {
       <AppLayout
       mode={mode}
       onModeChange={setMode}
-      currentTrack={playlist.currentTrack}
-      playing={playlist.playing}
-      volume={playlist.volume}
-      shuffle={playlist.shuffle}
-      repeat={playlist.repeat}
-      positionValue={playlist.positionValue}
-      error={playlist.error}
-      onToggle={playlist.toggle}
-      onNext={playlist.next}
-      onPrevious={playlist.previous}
-      onVolumeChange={playlist.setVolume}
-      onSeek={playlist.seek}
-      onToggleShuffle={playlist.toggleShuffle}
-      onCycleRepeat={playlist.cycleRepeat}
-      onClearError={playlist.clearError}
       onSearch={setSearchQuery}
     >
       {mode !== "zen" && mode !== "mini" && (

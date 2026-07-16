@@ -11,8 +11,24 @@ pub struct ConfigStore {
 impl ConfigStore {
     pub fn load(path: &Path) -> Result<Self, AppError> {
         let config = if path.exists() {
-            let data = std::fs::read_to_string(path)?;
-            serde_json::from_str(&data)?
+            match std::fs::read_to_string(path)
+                .ok()
+                .and_then(|data| serde_json::from_str::<AppConfig>(&data).ok())
+            {
+                Some(cfg) => cfg,
+                None => {
+                    // Corrupt or unreadable config: warn, overwrite with defaults, continue.
+                    eprintln!(
+                        "[flowplayer] config at {} was unreadable; restoring defaults",
+                        path.display()
+                    );
+                    let cfg = AppConfig::default();
+                    if let Ok(data) = serde_json::to_string_pretty(&cfg) {
+                        let _ = std::fs::write(path, data);
+                    }
+                    cfg
+                }
+            }
         } else {
             let config = AppConfig::default();
             let data = serde_json::to_string_pretty(&config)?;
@@ -108,6 +124,38 @@ mod tests {
         assert_eq!(cfg.last_track_index, Some(42));
         assert!((cfg.last_position - 123.456).abs() < f64::EPSILON);
         assert_eq!(cfg.repeat, RepeatMode::One);
+
+        let _ = std::fs::remove_file(&path);
+    }
+
+    #[test]
+    fn load_recovers_from_corrupt_json() {
+        let path = temp_path("corrupt");
+        let _ = std::fs::remove_file(&path);
+        std::fs::write(&path, b"{ this is not valid json :::").unwrap();
+
+        // Should not propagate an error — must restore defaults instead.
+        let store = ConfigStore::load(&path).unwrap();
+        let cfg = store.get();
+        assert_eq!(cfg.volume, 0.8);
+        assert!(!cfg.shuffle);
+        assert_eq!(cfg.last_track_index, None);
+
+        // Defaults should now be persisted to disk.
+        let reloaded = ConfigStore::load(&path).unwrap();
+        assert_eq!(reloaded.get().volume, 0.8);
+
+        let _ = std::fs::remove_file(&path);
+    }
+
+    #[test]
+    fn load_recovers_from_empty_file() {
+        let path = temp_path("empty");
+        let _ = std::fs::remove_file(&path);
+        std::fs::write(&path, b"").unwrap();
+
+        let store = ConfigStore::load(&path).unwrap();
+        assert_eq!(store.get().volume, 0.8);
 
         let _ = std::fs::remove_file(&path);
     }

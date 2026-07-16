@@ -40,9 +40,10 @@ interface Props {
   currentTrack: Track | null;
   onSelect: (track: Track) => void;
   loading?: boolean;
+  scanProgress?: { processed: number; found: number } | null;
 }
 
-export function TrackList({ tracks, currentTrack, onSelect, loading }: Props) {
+export function TrackList({ tracks, currentTrack, onSelect, loading, scanProgress }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [scrollTop, setScrollTop] = useState(0);
   const [containerHeight, setContainerHeight] = useState(0);
@@ -73,7 +74,18 @@ export function TrackList({ tracks, currentTrack, onSelect, loading }: Props) {
   );
 
   if (loading) {
-    return <div className="track-list__loading">Scanning...</div>;
+    return (
+      <div className="track-list__loading" role="status" aria-live="polite">
+        <div className="track-list__loading-label">
+          {scanProgress
+            ? `Scanning… ${scanProgress.found} found · ${scanProgress.processed} files`
+            : "Scanning…"}
+        </div>
+        <div className="track-list__progress" aria-hidden="true">
+          <div className="track-list__progress-bar" />
+        </div>
+      </div>
+    );
   }
 
   if (tracks.length === 0) {

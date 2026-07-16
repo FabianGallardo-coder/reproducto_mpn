@@ -467,6 +467,43 @@ body:has(.layout--mini) { background: transparent; }
   text-align: center;
   color: var(--text-secondary);
   animation: pulse 1.2s ease-in-out infinite;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+}
+
+.track-list__loading-label {
+  font-size: var(--fs-base);
+}
+
+.track-list__progress {
+  width: min(280px, 80%);
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+  position: relative;
+}
+
+.track-list__progress-bar {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 30%;
+  border-radius: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--accent, #fff) 50%,
+    transparent
+  );
+  animation: scan-progress 1.4s ease-in-out infinite;
+}
+
+@keyframes scan-progress {
+  0%   { left: -30%; }
+  100% { left: 100%; }
 }
 
 .track-list__item {
@@ -1211,6 +1248,24 @@ body:has(.layout--mini) { background: transparent; }
 .radio-panel__station:hover { background: var(--glass-hover); }
 .radio-panel__name { font-size: 13px; font-weight: 500; }
 .radio-panel__genre { font-size: 11px; color: var(--text-secondary); }
+
+.radio-panel__offline {
+  margin: 8px 0;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: rgba(255, 200, 80, 0.12);
+  border: 1px solid rgba(255, 200, 80, 0.3);
+  color: rgba(255, 220, 140, 0.95);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.radio-panel__station:disabled,
+.radio-panel__station[aria-disabled="true"] {
+  opacity: 0.45;
+  cursor: not-allowed;
+  background: none;
+}
 
 /* ═══════════════════════════════════════════════════
    ERROR TOAST

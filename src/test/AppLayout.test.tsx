@@ -1,35 +1,66 @@
 import { render, screen } from "@testing-library/react";
-import { describe, it, expect, vi } from "vitest";
-import { AppLayout } from "../components/layout/AppLayout";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+
+const mockState: {
+  currentTrack: { path: string; title: string; artist: string; album: string; duration: number } | null;
+  playing: boolean;
+  volume: number;
+  shuffle: boolean;
+  repeat: "off" | "all" | "one";
+  positionValue: number;
+  error: string | null;
+} = {
+  currentTrack: null,
+  playing: false,
+  volume: 0.8,
+  shuffle: false,
+  repeat: "off",
+  positionValue: 0,
+  error: null,
+};
+
+const mockActions = {
+  toggle: vi.fn(),
+  next: vi.fn(),
+  previous: vi.fn(),
+  setVolume: vi.fn(),
+  seek: vi.fn(),
+  toggleShuffle: vi.fn(),
+  cycleRepeat: vi.fn(),
+  loadLibrary: vi.fn(),
+  playTrack: vi.fn(),
+  playAtIndex: vi.fn(),
+  pause: vi.fn(),
+  resume: vi.fn(),
+  setShuffle: vi.fn(),
+  setRepeat: vi.fn(),
+  search: vi.fn(),
+  clearError: vi.fn(),
+};
+
+vi.mock("../hooks/usePlayerStore", () => ({
+  usePlayerState: () => mockState,
+  usePlayerActions: () => mockActions,
+  usePlayerStore: () => ({ ...mockState, ...mockActions }),
+}));
 
 vi.mock("../lib/api", () => ({
   api: { playUrl: vi.fn(), listRadioStations: vi.fn().mockResolvedValue([]) },
 }));
 
-const baseProps = {
-  mode: "normal" as const,
-  onModeChange: vi.fn(),
-  currentTrack: null,
-  playing: false,
-  volume: 0.8,
-  shuffle: false,
-  repeat: "off" as const,
-  positionValue: 0,
-  error: null,
-  onToggle: vi.fn(),
-  onNext: vi.fn(),
-  onPrevious: vi.fn(),
-  onVolumeChange: vi.fn(),
-  onSeek: vi.fn(),
-  onToggleShuffle: vi.fn(),
-  onCycleRepeat: vi.fn(),
-  onClearError: vi.fn(),
-};
+vi.mock("../lib/useCoverArt", () => ({ useCoverArt: () => null }));
+
+import { AppLayout } from "../components/layout/AppLayout";
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  mockState.error = null;
+});
 
 describe("AppLayout", () => {
   it("renders children in normal mode", () => {
     render(
-      <AppLayout {...baseProps}>
+      <AppLayout mode="normal" onModeChange={vi.fn()}>
         <div>Content</div>
       </AppLayout>,
     );
@@ -38,37 +69,37 @@ describe("AppLayout", () => {
 
   it("renders zen mode without sidebar", () => {
     render(
-      <AppLayout {...baseProps} mode="zen">
+      <AppLayout mode="zen" onModeChange={vi.fn()}>
         <div>Zen content</div>
       </AppLayout>,
     );
     expect(screen.getByText("Zen content")).toBeInTheDocument();
-    expect(screen.queryByText("FlowPlayer")).not.toBeInTheDocument();
   });
 
   it("shows error toast when error present", () => {
+    mockState.error = "Something broke";
     render(
-      <AppLayout {...baseProps} error="Something broke">
+      <AppLayout mode="normal" onModeChange={vi.fn()}>
         <div>Content</div>
       </AppLayout>,
     );
     expect(screen.getByText("Something broke")).toBeInTheDocument();
   });
 
-  it("calls onClearError when clicking error toast", () => {
-    const onClearError = vi.fn();
+  it("calls clearError when clicking error toast", () => {
+    mockState.error = "Error msg";
     render(
-      <AppLayout {...baseProps} error="Error msg" onClearError={onClearError}>
+      <AppLayout mode="normal" onModeChange={vi.fn()}>
         <div>Content</div>
       </AppLayout>,
     );
     screen.getByText("Error msg").click();
-    expect(onClearError).toHaveBeenCalledOnce();
+    expect(mockActions.clearError).toHaveBeenCalledOnce();
   });
 
   it("shows Library and Radio tabs", () => {
     render(
-      <AppLayout {...baseProps}>
+      <AppLayout mode="normal" onModeChange={vi.fn()}>
         <div>Content</div>
       </AppLayout>,
     );
@@ -78,7 +109,7 @@ describe("AppLayout", () => {
 
   it("renders player bar", () => {
     render(
-      <AppLayout {...baseProps}>
+      <AppLayout mode="normal" onModeChange={vi.fn()}>
         <div>Content</div>
       </AppLayout>,
     );

@@ -15,7 +15,21 @@ const makeTracks = (n: number): Track[] =>
 describe("TrackList", () => {
   it("shows loading state", () => {
     render(<TrackList tracks={[]} currentTrack={null} onSelect={vi.fn()} loading />);
-    expect(screen.getByText("Scanning...")).toBeInTheDocument();
+    expect(screen.getByText(/Scanning…?/)).toBeInTheDocument();
+  });
+
+  it("shows scan progress counters when provided", () => {
+    render(
+      <TrackList
+        tracks={[]}
+        currentTrack={null}
+        onSelect={vi.fn()}
+        loading
+        scanProgress={{ processed: 250, found: 47 }}
+      />,
+    );
+    expect(screen.getByText(/47 found/)).toBeInTheDocument();
+    expect(screen.getByText(/250 files/)).toBeInTheDocument();
   });
 
   it("shows empty state", () => {
