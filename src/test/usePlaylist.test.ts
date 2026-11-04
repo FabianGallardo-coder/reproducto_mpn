@@ -64,6 +64,21 @@ describe("usePlaylist", () => {
     expect(result.current.tracks).toHaveLength(3);
   });
 
+  it("loadLibrary displays scan warnings without discarding playable tracks", async () => {
+    vi.mocked(api.scanFolder).mockImplementationOnce(async (_path, _progress, onWarnings) => {
+      onWarnings?.(['No se pudo leer "Broken.wav"']);
+      return tracks;
+    });
+    const { result } = renderPlaylistHook();
+    await act(async () => { await result.current.loadLibrary("/music"); });
+    expect(result.current.tracks).toEqual(tracks);
+    expect(result.current.error).toBe('Se omitieron 1 archivos de audio. No se pudo leer "Broken.wav"');
+    expect(result.current.loading).toBe(false);
+    await act(async () => { await result.current.loadLibrary("/music"); });
+    expect(result.current.error).toBeNull();
+    expect(result.current.tracks).toEqual(tracks);
+  });
+
   it("setVolume calls api", async () => {
     const { result } = renderPlaylistHook();
     await act(async () => {

@@ -1,0 +1,18 @@
+{
+  "bundle": {
+    "externalBin": [],
+    "targets": [],
+    "android": { "minSdkVersion": 26 }
+  },
+  "app": {
+    "windows": [{
+      "title": "FlowPlayer",
+      "width": 412,
+      "height": 850,
+      "minWidth": 0,
+      "minHeight": 0,
+      "transparent": false,
+      "decorations": true
+    }]
+  }
+}

@@ -1,4 +1,5 @@
-import { invoke, Channel } from "@tauri-apps/api/core";
+import { Channel } from "@tauri-apps/api/core";
+import { invoke, isAndroid } from "./platform";
 import type { Track, AppConfig, PlaybackState, RepeatMode, RadioStation } from "../types";
 import type { YouTubeCollection, YouTubeItem, YouTubeLibrary } from "../types/youtube";
 import type { PlayHistoryEntry } from "../types/history";
@@ -42,7 +43,15 @@ export const api = {
   getState: () => logInvoke("get_state", () => invoke<PlaybackState>("get_state")),
   setPlaylist: (tracks: Track[], index: number) =>
     logInvoke("set_playlist", () => invoke<void>("set_playlist", { tracks, index })),
-  scanFolder: (path: string, onProgress?: (p: ScanProgress) => void) => {
+  scanFolder: (path: string, onProgress?: (p: ScanProgress) => void, onWarnings?: (warnings: string[]) => void) => {
+    if (isAndroid) return logInvoke("scan_folder", async () => {
+      const result = await invoke<{ tracks: Track[]; warnings: string[] }>("scan_folder", { path });
+      if (result.warnings.length) {
+        console.warn("[ipc] scan_folder skipped audio documents", result.warnings);
+        onWarnings?.(result.warnings);
+      }
+      return result.tracks;
+    });
     const channel = new Channel<ScanProgress>();
     if (onProgress) channel.onmessage = onProgress;
     return logInvoke("scan_folder", () => invoke<Track[]>("scan_folder", { path, onProgress: channel }));

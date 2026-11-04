@@ -1,7 +1,7 @@
 <div align="center">
   <img src="public/favicon.svg" width="96" height="96" alt="Icono de FlowPlayer">
   <h1>FlowPlayer</h1>
-  <p>Tu biblioteca, YouTube y radio en un reproductor de escritorio.</p>
+  <p>Tu biblioteca, YouTube y radio en escritorio, con adaptación Android de prueba.</p>
   <p>
     <a href="https://fabiangallardo-coder.github.io/reproducto_mpn/">Sitio web</a> ·
     <a href="docs/wiki/Primeros-pasos.md">Primeros pasos</a> ·
@@ -16,6 +16,8 @@ FlowPlayer reúne música local, radio por Internet y el reproductor oficial de 
 ![Biblioteca de FlowPlayer con archivos de prueba](docs/assets/library.png)
 
 ## Qué podés hacer
+
+Las funciones siguientes describen la versión de escritorio. Android tiene un backend y un alcance propios, detallados más abajo.
 
 - Explorar archivos locales, marcar favoritos y crear playlists.
 - Buscar en la biblioteca, en YouTube o entre las emisoras disponibles.
@@ -69,6 +71,24 @@ En **Configuración**, elegí tu carpeta de música. Para YouTube o radio hace f
 
 El servidor Vite por sí solo no reemplaza la app de escritorio: necesita el puente IPC de Tauri. GitHub Pages presenta el proyecto y su documentación, no ejecuta el reproductor.
 
+## Android: adaptación de prueba
+
+El proyecto incluye una APK de desarrollo para **Android 8 o superior**; la compilación probada es **ARM64**, con firma debug. No se publica un binario ni una Release en esta actualización.
+
+| Función | Estado Android |
+|---|---|
+| Archivos locales | Selector nativo de carpetas/archivos con permisos persistentes y URI `content://`. Un audio ilegible se omite con aviso sin descartar los válidos. |
+| Reproducción | Motor Media3 con cola, pausa, seek, siguiente/anterior, aleatorio y repetición. Servicio multimedia para audio local y radio en segundo plano. |
+| Biblioteca | Favoritos, playlists, preferencias e historial locales. |
+| YouTube | Abrir enlaces desde Buscar; iframe oficial visible, flotante o acoplado. Se pausa al ocultar la app o entrar en Zen/Mini. |
+| Búsqueda y descargas de YouTube | No disponibles. La búsqueda integrada requiere una futura integración con la API oficial. |
+| Letras y visualizador | No disponibles; la interfaz lo indica. |
+| Modos | Vistas dentro de la app; Mini no crea una ventana flotante sobre otras aplicaciones. Zen mantiene los controles táctiles visibles. |
+
+Se revisó la APK en un TECNO BG7 con Android 13: selección de documentos, recuperación ante un audio dañado, capturas de páginas/paneles, teclado real y reproductor oficial de YouTube. Las regresiones de navegador verifican cuatro tamaños, incluido horizontal; no sustituyen pruebas en otros teléfonos. La certificación completa de notificación, audio focus, radio real, audibilidad e instalación de distribución sigue pendiente.
+
+Para compilar e instalar una APK propia, seguí [Desarrollo](docs/wiki/Desarrollo.md) y [Primeros pasos](docs/wiki/Primeros-pasos.md).
+
 ## Documentación
 
 | Guía | Contenido |
@@ -114,4 +134,4 @@ Abrí un issue con los pasos para reproducir el problema, el modo de ventana, la
 
 El repositorio no incluye actualmente un archivo `LICENSE`; no se declara una licencia de distribución para el proyecto hasta que su titular la establezca.
 
-Las dependencias conservan sus propias licencias. Entre los componentes utilizados están Tauri, React, rodio, Symphonia, lofty, reqwest y yt-dlp. La interfaz toma referencias de Limusic y Valentine, sin afirmar afiliación con esos proyectos. YouTube es un servicio externo y sus restricciones siguen siendo aplicables.
+Las dependencias conservan sus propias licencias. Entre los componentes utilizados están Tauri, React, rodio, Symphonia, lofty, reqwest, yt-dlp y AndroidX Media3. La interfaz toma referencias de Limusic y Valentine, sin afirmar afiliación con esos proyectos. YouTube es un servicio externo y sus restricciones siguen siendo aplicables.

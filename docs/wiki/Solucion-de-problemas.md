@@ -25,6 +25,16 @@ La versión actual debe volver a Normal al pulsar Inicio, Buscar, Biblioteca, Es
 
 No intentes resolver restricciones de YouTube desactivando indiscriminadamente la CSP.
 
+## Android: error `0xFFFFFFEA` al escanear
+
+El lector de metadatos de Android puede devolver `setDataSource failed` para un archivo ilegible, dañado o con formato no compatible. La versión actual omite ese archivo, lo identifica en un aviso y conserva las pistas válidas. Probá el archivo por separado antes de reemplazarlo; el error no demuestra por sí solo que se haya perdido toda la carpeta.
+
+Si el mensaje indica permiso revocado, volvé a seleccionar la carpeta y concedé lectura. Es un error distinto; no se trata como escaneo vacío exitoso. No hace falta borrar los datos de la app.
+
+## Android: no encuentro la carpeta o no puedo seleccionarla
+
+El selector puede abrirse en la ubicación anterior. Entrá al almacenamiento interno y luego a la subcarpeta real; `Download` puede aparecer como Descargas. La raíz y algunas carpetas especiales no se pueden autorizar por las restricciones de Android. Una carpeta QA creada durante desarrollo no viene incluida en el APK.
+
 ## Una pista favorita o descargada desapareció
 
 Las referencias dependen de la ubicación real del archivo. Revisá si se movió, borró o quedó en una unidad desconectada. No borres todo el catálogo para solucionar una sola entrada.
@@ -39,4 +49,4 @@ Recompilá el bundle y actualizá el acceso directo o reinstalá el paquete gene
 
 ## Informar un problema
 
-Incluí versión o commit, Windows y WebView2, modo, fuente de audio, pasos, resultado esperado y real. Adjuntá una captura y errores relevantes sin tokens, rutas privadas ni datos personales.
+Incluí versión o commit, sistema operativo (Windows/WebView2 o modelo y versión Android), modo, fuente de audio, pasos, resultado esperado y real. Adjuntá una captura y errores relevantes sin tokens, rutas privadas ni datos personales.

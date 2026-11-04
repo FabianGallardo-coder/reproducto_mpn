@@ -8,6 +8,7 @@ import { openExternal } from "../../lib/openExternal";
 import { youtubeIdFromPath, youtubeWatchUrl } from "../../types/youtube";
 import { CloseIcon, ExternalLinkIcon, QueueIcon } from "../ui/Icons";
 import { useYouTubeStage } from "./YouTubeStage";
+import { isAndroid } from "../../lib/platform";
 
 /**
  * Persistent home of the official YouTube embedded player. It is never hidden: it covers the Now Playing
@@ -15,12 +16,26 @@ import { useYouTubeStage } from "./YouTubeStage";
  */
 export function YouTubeHost({ onOpenNowPlaying }: { onOpenNowPlaying?: () => void }) {
   const { currentTrack, playing, volume, positionRef } = usePlayerState();
-  const { reportYouTubeState, youtubeEnded, registerYouTubeController, stopYouTube } = usePlayerActions();
+  const { reportYouTubeState, youtubeEnded, registerYouTubeController, stopYouTube, pause } = usePlayerActions();
   const { stage } = useYouTubeStage();
   const { navigate, route } = useNavigation();
   const videoId = currentTrack ? youtubeIdFromPath(currentTrack.path) : null;
   const [errorCode, setErrorCode] = useState<number | null>(null);
   const [rect, setRect] = useState<DOMRect | null>(null);
+
+  useEffect(() => {
+    if (!isAndroid || !videoId) return;
+    const hidden = () => {
+      if (document.hidden) void pause();
+    };
+    const background = () => void pause();
+    document.addEventListener("visibilitychange", hidden);
+    window.addEventListener("flowplayer-background", background);
+    return () => {
+      document.removeEventListener("visibilitychange", hidden);
+      window.removeEventListener("flowplayer-background", background);
+    };
+  }, [videoId, pause]);
 
   const { mountRef, controller, status, loadError } = useYouTubePlayer({
     videoId,

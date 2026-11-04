@@ -8,6 +8,7 @@ import { YouTubePanel } from "../components/YouTubePanel";
 import { useNavigation, type LibrarySection } from "../hooks/useNavigation";
 import { usePlayerActions, usePlayerState } from "../hooks/usePlayerStore";
 import type { PageProps } from "./pageTypes";
+import { isAndroid } from "../lib/platform";
 
 const SECTIONS: ReadonlyArray<{ id: Exclude<LibrarySection, "playlist">; label: string }> = [
   { id: "pistas", label: "Pistas locales" },
@@ -66,7 +67,9 @@ export function BibliotecaPage({ controls }: PageProps) {
         )
       )}
       {section === "favoritos" && <div className="library__panel"><FavoritesPanel query="" /></div>}
-      {section === "descargas" && <div className="library__panel"><YouTubePanel onPlay={playVirtualTrack} query="" /></div>}
+      {section === "descargas" && <div className="library__panel">{isAndroid
+        ? <p>Las descargas de YouTube no están disponibles en Android. Abrí un enlace desde Buscar para usar el reproductor oficial.</p>
+        : <YouTubePanel onPlay={playVirtualTrack} query="" />}</div>}
       {section === "radio" && <div className="library__panel"><RadioPanel onPlay={playVirtualTrack} query="" /></div>}
       {section === "playlist" && (
         playlistTracks.length ? (

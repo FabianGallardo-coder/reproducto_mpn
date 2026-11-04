@@ -2,6 +2,7 @@ import type { MouseEvent } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import type { Track } from "../../../types";
 import { formatTime } from "../../../lib/format";
+import { isAndroid } from "../../../lib/platform";
 import { useCoverArt } from "../../../lib/useCoverArt";
 import { MusicIcon, PrevIcon, NextIcon, PlayIcon, PauseIcon } from "../../ui/Icons";
 
@@ -32,7 +33,7 @@ export function MiniView({
   // data-tauri-drag-region only reacts to the exact element, so children like
   // the cover or title blocked dragging. Drag from anywhere except controls.
   const handleDragStart = (e: MouseEvent<HTMLDivElement>) => {
-    if (e.button !== 0) return;
+    if (isAndroid || e.button !== 0) return;
     if ((e.target as HTMLElement).closest("button, input, a")) return;
     e.preventDefault();
     getCurrentWindow().startDragging().catch((err) => {

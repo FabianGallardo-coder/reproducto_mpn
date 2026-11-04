@@ -1,0 +1,7 @@
+{
+  "identifier": "flowplayer:android",
+  "description": "Android main window and native media bridge",
+  "platforms": ["android"],
+  "windows": ["main"],
+  "permissions": ["core:default", "allow-mobile-command"]
+}

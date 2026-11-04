@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { open } from "@tauri-apps/plugin-dialog";
+import { isAndroid, selectMedia } from "./lib/platform";
 import { listen } from "@tauri-apps/api/event";
 import { api } from "./lib/api";
 import { usePlayerStore } from "./hooks/usePlayerStore";
@@ -33,7 +33,7 @@ function App() {
       player.setVolume(c.volume);
       player.setShuffle(c.shuffle);
       player.setRepeat(c.repeat ?? "off");
-      player.loadLibrary(c.music_folder);
+      if (c.music_folder) player.loadLibrary(c.music_folder);
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -54,7 +54,7 @@ function App() {
 
   const handleSelectFolder = useCallback(async () => {
     try {
-      const selected = await open({ directory: true, multiple: false });
+      const selected = await selectMedia(true);
       if (typeof selected === "string") {
         setMusicFolder(selected);
         // Show loading state while loading library
@@ -80,15 +80,13 @@ function App() {
 
   const handleOpenFile = useCallback(async () => {
     try {
-      const selected = await open({
-        multiple: false,
-        filters: [{ name: "Audio", extensions: ["mp3", "wav", "flac", "ogg", "m4a", "aac", "opus"] }],
-      });
+      const selected = await selectMedia(false);
       if (typeof selected === "string") {
         await player.playExternalFile(selected);
       }
     } catch (error) {
       console.error("Failed to open file:", error);
+      window.alert(`No se pudo abrir el archivo:\n${String(error)}`);
     }
   }, [player.playExternalFile]);
 
@@ -250,6 +248,7 @@ function App() {
           {bgCoverUrl && <img src={bgCoverUrl} alt="" className="app-bg__img" />}
         </div>
       )}
+      {isAndroid && <span className="mobile-platform-note" role="note">Android de prueba · YouTube visible · audio local y radio en segundo plano</span>}
       <AppLayout mode={mode} onModeChange={setMode}>
         <ErrorBoundary>{content}</ErrorBoundary>
       </AppLayout>

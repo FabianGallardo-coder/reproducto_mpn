@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="FlowPlayer: biblioteca local, YouTube y radio en un reproductor de escritorio con cuatro modos. Guías de uso y desarrollo.">
+    <meta name="description" content="FlowPlayer: biblioteca local, YouTube y radio en escritorio, con adaptación Android de prueba. Guías de uso y desarrollo.">
     <meta name="theme-color" content="#131117">
     <title>FlowPlayer — Música a tu ritmo</title>
     <link rel="icon" type="image/svg+xml" href="./assets/icon.svg">
@@ -33,7 +33,7 @@
             <a class="button" href="#empezar">Empezar con FlowPlayer <span aria-hidden="true">→</span></a>
             <a class="button secondary" href="#guias">Leer las guías</a>
           </div>
-          <p class="note">Tauri 2 + Rust + React. Validación nativa actual en Windows.</p>
+          <p class="note">Tauri 2 + Rust + React. Escritorio Windows y adaptación Android de prueba con Media3.</p>
         </div>
         <img class="hero-icon" src="./assets/icon.svg" width="280" height="280" alt="Símbolo violeta de sonido y reproducción">
       </section>
@@ -101,6 +101,10 @@ Set-Location reproducto_mpn
 npm ci
 npm run tauri dev</code></pre>
         <p>Después, seleccioná tu carpeta en <strong>Configuración</strong> y reproducí una pista desde <strong>Biblioteca</strong>.</p>
+        <h3>Android en pruebas</h3>
+        <p>El código incluye una adaptación para Android 8 o superior, probada en ARM64: selector nativo, audio local, radio, favoritos, playlists y diseño móvil. YouTube se abre mediante enlaces y conserva el reproductor oficial visible; se pausa al ocultar la app.</p>
+        <p>La búsqueda remota y las descargas de YouTube, las letras y el visualizador no están disponibles en Android. Los modos son vistas internas, no ventanas flotantes sobre otras aplicaciones. La validación completa de distribución y segundo plano sigue pendiente.</p>
+        <p>No se publica una APK ni una Release en esta actualización. Consultá <a href="https://github.com/FabianGallardo-coder/reproducto_mpn/blob/main/docs/wiki/Desarrollo.md">cómo compilar una APK de prueba</a> y los <a href="https://github.com/FabianGallardo-coder/reproducto_mpn/blob/main/docs/wiki/QA.md">controles de QA</a>.</p>
         <aside class="notice" aria-label="Acerca de este sitio">
           Este sitio presenta la app y su documentación. No es un reproductor web: FlowPlayer necesita el backend de Tauri. YouTube, radio y letras requieren conexión; la música local no.
         </aside>

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { Visualizer } from "../../Visualizer";
 import { CloseIcon, PlayIcon, PauseIcon, PrevIcon, NextIcon } from "../../ui/Icons";
 import type { Track } from "../../../types";
+import { isAndroid } from "../../../lib/platform";
 
 interface Props {
   currentTrack: Track | null;
@@ -15,6 +16,7 @@ interface Props {
 export function ZenView({ currentTrack, playing, onExit, onToggle, onNext, onPrevious }: Props) {
   const [showControls, setShowControls] = useState(false);
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const controlsVisible = isAndroid || showControls;
 
   const showAndHide = useCallback(() => {
     setShowControls(true);
@@ -40,12 +42,12 @@ export function ZenView({ currentTrack, playing, onExit, onToggle, onNext, onPre
   }, [showAndHide, onExit]);
 
   return (
-    <div className="zen-view" onMouseMove={showAndHide}>
+    <div className="zen-view" onMouseMove={showAndHide} onPointerDown={showAndHide}>
       <button
         className="zen-exit"
         style={{
-          opacity: showControls ? 0.8 : 0,
-          pointerEvents: showControls ? "auto" : "none",
+          opacity: controlsVisible ? 0.8 : 0,
+          pointerEvents: controlsVisible ? "auto" : "none",
           transition: "opacity 0.5s ease",
           animation: "none",
         }}
@@ -63,8 +65,8 @@ export function ZenView({ currentTrack, playing, onExit, onToggle, onNext, onPre
         <div
           className="zen-view__info"
           style={{
-            opacity: showControls ? 1 : 0,
-            pointerEvents: showControls ? "auto" : "none",
+            opacity: controlsVisible ? 1 : 0,
+            pointerEvents: controlsVisible ? "auto" : "none",
             transition: "opacity 0.5s ease-in-out",
           }}
         >
@@ -76,8 +78,8 @@ export function ZenView({ currentTrack, playing, onExit, onToggle, onNext, onPre
       <div
         className="zen-view__controls"
         style={{
-          opacity: showControls ? 1 : 0,
-          pointerEvents: showControls ? "auto" : "none",
+          opacity: controlsVisible ? 1 : 0,
+          pointerEvents: controlsVisible ? "auto" : "none",
           transition: "opacity 0.5s ease-in-out",
         }}
       >

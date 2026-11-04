@@ -33,6 +33,18 @@ La configuración espera un sidecar `yt-dlp` para las funciones de YouTube. En W
 
 El escaneo lee archivos; no importa ni mueve tu biblioteca. Los formatos habituales incluyen MP3, WAV, FLAC, OGG, M4A, AAC y Opus, sujetos a la compatibilidad del decodificador y a la integridad del archivo.
 
-## Siguiente paso
+## Probar la APK Android
+
+La adaptación Android está en desarrollo; no se ofrece una Release descargable en esta actualización. Si compilaste una APK siguiendo [Desarrollo](Desarrollo.md), necesitás Android 8 o superior y, para la variante probada, un dispositivo ARM64.
+
+1. Instalá la APK de prueba de una fuente que controles. Es una compilación debug, no un paquete firmado para distribución.
+2. Abrí **Biblioteca → Elegir carpeta**.
+3. En el selector del sistema, entrá a la carpeta concreta y pulsá **Usar esta carpeta → Permitir**. Android puede impedir seleccionar la raíz del almacenamiento o de Descargas; elegí una subcarpeta.
+4. Esperá el escaneo y seleccioná una pista. Si un archivo no puede leerse, verás un aviso y el resto de las pistas seguirá disponible.
+5. Para YouTube, abrí **Buscar**, pegá un enlace de video y pulsá **Reproducir video**. No hay búsqueda remota ni descargas en Android.
+
+El permiso da acceso de lectura; no mueve tu música. Los audios silenciosos de QA sirven para verificar estado y duración, no para comprobar audibilidad. La carpeta de QA de una sesión de desarrollo no forma parte del APK ni se crea al instalarlo.
+
+## Continuar
 
 Consultá [Biblioteca y playlists](Biblioteca-y-playlists.md), o [YouTube y radio](YouTube-y-radio.md) para fuentes en línea. Si no se oye audio, seguí [Solución de problemas](Solucion-de-problemas.md).

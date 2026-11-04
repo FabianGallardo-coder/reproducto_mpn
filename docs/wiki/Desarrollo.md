@@ -20,7 +20,15 @@ FlowPlayer tiene dos rutas de reproducción:
 | Audio, metadata e integraciones | `src-tauri/src/audio/`, `metadata/`, `youtube*.rs`, `lyrics.rs`, `radio.rs` |
 | Historial y persistencia | `src-tauri/src/history.rs`, `src-tauri/src/config/` |
 
-Los comandos se registran en `src-tauri/src/lib.rs`. Agregar uno requiere revisar registro, tipos frontend y permisos/capacidades, no solamente implementar la función Rust. El escaneo usa un `Channel` para progreso; no se debe invocar sin ese argumento.
+`src-tauri/src/lib.rs` selecciona el backend por plataforma: escritorio en `desktop.rs` y Android en `mobile.rs`. Agregar un comando requiere revisar registro, tipos frontend y permisos/capacidades, no solamente implementar la función Rust. En escritorio el escaneo usa un `Channel` para progreso; no se debe invocar sin ese argumento.
+
+### Backend Android
+
+`src/lib/platform.ts` redirige el IPC a `mobile_command`, registrado en Rust. Este llama al plugin Kotlin `MediaPlugin.kt` en `src-tauri/gen/android/app/src/main/java/com/flowplayer/app/`. El plugin usa el selector de documentos y Media3; `PlaybackService.kt` mantiene la sesión multimedia. No usa rodio, yt-dlp ni plugins exclusivos de escritorio.
+
+El comando Android `scan_folder` devuelve `{ tracks, warnings }`. `api.scanFolder` adapta la respuesta al contrato frontend de pistas y comunica los archivos omitidos. Los errores de permisos y de carpeta siguen siendo errores explícitos. Las URI son sensibles a mayúsculas y no se normalizan como rutas Windows.
+
+`src/styles/mobile.css` limita las adaptaciones a `html[data-platform="android"]`. El transporte se adapta al teclado y a pantallas horizontales; Reproduciendo usa desplazamiento vertical. Los modos móviles son vistas internas, no cambios de geometría de ventanas nativas.
 
 ## Comandos
 
@@ -68,6 +76,32 @@ npm run tauri build
 ```
 
 Los bundles quedan en `src-tauri\target\release\bundle`. Comprobá el sidecar yt-dlp y probá el instalador en un equipo limpio. No se declara firma de código ni validación de macOS/Linux.
+
+### APK ARM64 de desarrollo
+
+Requisitos adicionales: JDK 21, Android SDK con plataforma y Build Tools 36, NDK `27.2.12479018`, herramientas de plataforma y target Rust `aarch64-linux-android`. Android Studio puede instalar el SDK/NDK; revisá y aceptá las licencias desde sus herramientas oficiales.
+
+Configurá las rutas para tu equipo en la misma terminal PowerShell (no hace falta cambiar el Java global):
+
+```powershell
+$env:JAVA_HOME = 'C:\ruta\a\jdk-21'
+$env:ANDROID_HOME = "$env:LOCALAPPDATA\Android\Sdk"
+$env:NDK_HOME = "$env:ANDROID_HOME\ndk\27.2.12479018"
+$env:PATH = "$env:JAVA_HOME\bin;$env:PATH"
+rustup target add aarch64-linux-android
+npm run tauri android build -- --debug --apk --target aarch64 --ci
+```
+
+El proyecto Android ya está inicializado; no lo regeneres para compilar. El comando aplica la configuración móvil `src-tauri/tauri.android.conf.json`, sin sidecar de escritorio. La salida habitual es `src-tauri\gen\android\app\build\outputs\apk\universal\debug\app-universal-debug.apk`. Aunque el nombre diga «universal», este comando incluye únicamente ARM64.
+
+Para instalarla en un teléfono autorizado, con depuración USB activada:
+
+```powershell
+adb devices
+adb -s SERIAL install -r src-tauri\gen\android\app\build\outputs\apk\universal\debug\app-universal-debug.apk
+```
+
+Reemplazá `SERIAL` por el identificador de tu dispositivo. La firma debug es solo para pruebas: una APK de distribución requiere firma de release propia y QA adicional. No subas keystores, contraseñas, `local.properties`, bibliotecas generadas ni APK al repositorio de código. La CI actual valida frontend y Rust de Windows, no compila Android.
 
 ## Cambios mantenibles
 

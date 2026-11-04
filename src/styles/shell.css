@@ -112,6 +112,8 @@
   margin: 0 var(--sp-1);
 }
 
+.sidebar__playlist-form-actions { display: none; }
+
 .sidebar__playlist-input {
   width: 100%;
   min-height: 38px;

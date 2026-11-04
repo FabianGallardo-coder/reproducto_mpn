@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import type { Track } from "../types";
+import { isAndroid } from "../lib/platform";
 
 interface MediaSessionActions {
   onPlay: () => void;
@@ -19,7 +20,7 @@ export function useMediaSession(
   positionRef.current = position;
 
   useEffect(() => {
-    if (!("mediaSession" in navigator)) return;
+    if (isAndroid || !("mediaSession" in navigator)) return;
 
     const ns = navigator.mediaSession;
 

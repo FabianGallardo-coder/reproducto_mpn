@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { api, type LrcLyrics } from "../lib/api";
 import { MusicIcon } from "./ui/Icons";
+import { isAndroid } from "../lib/platform";
 
 interface Props {
   artist: string;
@@ -32,7 +33,7 @@ export function Lyrics({ artist, title, album, duration, position }: Props) {
   const activeRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!artist || !title) return;
+    if (isAndroid || !artist || !title) return;
     let cancelled = false;
     setLoading(true);
     setTimedOut(false);
@@ -67,6 +68,7 @@ export function Lyrics({ artist, title, album, duration, position }: Props) {
     }
   }, [activeIndex]);
 
+  if (isAndroid) return <p className="lyrics">Las letras todavía no están disponibles en Android.</p>;
   if (loading && !timedOut) return <div className="lyrics lyrics--loading">Syncing lyrics...</div>;
   if (loading && timedOut) return <div className="lyrics lyrics--loading">No lyrics available</div>;
   if (!lyrics) return null;

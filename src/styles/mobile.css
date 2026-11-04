@@ -1,0 +1,229 @@
+html[data-platform="android"] {
+  --page-padding: 16px;
+  --sidebar-collapsed: 52px;
+  --player-height: 152px;
+}
+
+html[data-platform="android"] .layout {
+  --player-height: 152px;
+  height: calc(100dvh - 26px);
+}
+
+.mobile-platform-note {
+  display: block;
+  height: 26px;
+  padding: 3px 8px;
+  overflow: hidden;
+  font-size: 10px;
+  white-space: nowrap;
+  color: var(--text-secondary);
+  background: var(--bg-primary);
+}
+
+html[data-platform="android"] .layout--normal,
+html[data-platform="android"] .layout--flow {
+  grid-template-columns: 52px minmax(0, 1fr);
+}
+
+html[data-platform="android"] .sidebar {
+  padding: 8px 4px;
+}
+
+html[data-platform="android"] .sidebar__brand { padding: 0 7px 8px; }
+html[data-platform="android"] .sidebar__nav-item,
+html[data-platform="android"] .sidebar__mode-btn { min-height: 44px; }
+html[data-platform="android"] .page__header { flex-wrap: wrap; }
+html[data-platform="android"] .page__title { font-size: 26px; }
+html[data-platform="android"] .page__actions { flex-wrap: wrap; }
+html[data-platform="android"] .page__subtitle { overflow-wrap: anywhere; }
+html[data-platform="android"] input { font-size: 16px; }
+html[data-platform="android"] .chip-row { flex-wrap: wrap; }
+html[data-platform="android"] .player-bar {
+  height: auto;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  gap: 6px;
+  padding: 8px 12px;
+}
+html[data-platform="android"] .player-bar__track { grid-row: 1; grid-column: 1; }
+html[data-platform="android"] .player-bar__center { display: flex; grid-row: 2; grid-column: 1; width: 100%; }
+html[data-platform="android"] .player-bar__controls,
+html[data-platform="android"] .player-bar__seek-row { grid-column: auto; grid-row: auto; }
+html[data-platform="android"] .player-bar__volume { display: none; }
+html[data-platform="android"] .player-bar__art { width: 32px; height: 32px; }
+html[data-platform="android"] .yt-host--float { width: min(320px, calc(100vw - 64px)); right: 6px; bottom: 160px; }
+html[data-platform="android"] .flow-view { grid-template-rows: auto minmax(120px, 1fr) auto; }
+html[data-platform="android"] .flow-view__top { flex-wrap: wrap; }
+html[data-platform="android"] .flow-view__bottom { grid-template-columns: minmax(0, 1fr); }
+html[data-platform="android"] .flow-view__lyrics-col { display: none; }
+html[data-platform="android"] .mini-view { width: 100%; max-width: 400px; margin: auto; }
+
+.mobile-youtube-link { display: grid; gap: 10px; padding-block: 12px; }
+.mobile-youtube-link input { min-width: 0; width: 100%; }
+html[data-platform="android"] .mobile-youtube-link input,
+html[data-platform="android"] .radio-panel__input {
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+html[data-platform="android"] .mobile-youtube-link p { font-size: 12px; line-height: 1.5; color: var(--text-secondary); }
+html[data-platform="android"] .yt-host { --yt-bar-height: 44px; }
+html[data-platform="android"] .yt-host__action { width: 44px; height: 44px; flex: none; }
+
+html[data-platform="android"] .page {
+  gap: 20px;
+  padding-block: 20px;
+  overscroll-behavior: contain;
+}
+
+html[data-platform="android"] .page__body { flex: 1 0 auto; gap: 24px; }
+html[data-platform="android"] .page__heading { width: 100%; }
+html[data-platform="android"] .page__subtitle { line-height: 1.45; }
+html[data-platform="android"] .section__header { flex-wrap: wrap; }
+html[data-platform="android"] .section__title { font-size: 20px; }
+html[data-platform="android"] .home__grid { grid-template-columns: minmax(0, 1fr); }
+html[data-platform="android"] .home__shortcuts { grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr)); }
+html[data-platform="android"] .home__shortcut-title { white-space: normal; }
+html[data-platform="android"] .media-card { width: 144px; }
+
+html[data-platform="android"] .button,
+html[data-platform="android"] .chip,
+html[data-platform="android"] .swatch,
+html[data-platform="android"] .option,
+html[data-platform="android"] .icon-button,
+html[data-platform="android"] .track-list__fav-btn,
+html[data-platform="android"] .radio-panel__add-btn,
+html[data-platform="android"] .radio-panel__save-btn,
+html[data-platform="android"] .pomodoro__btn,
+html[data-platform="android"] .nowplaying__tab,
+html[data-platform="android"] .nowplaying__heart,
+html[data-platform="android"] .nowplaying__close {
+  min-height: 44px;
+}
+
+html[data-platform="android"] .icon-button,
+html[data-platform="android"] .track-list__fav-btn,
+html[data-platform="android"] .nowplaying__heart,
+html[data-platform="android"] .nowplaying__close { min-width: 44px; }
+html[data-platform="android"] .chip { padding-inline: 12px; }
+html[data-platform="android"] .option { min-width: 0; flex: 1 1 200px; padding: 12px; }
+html[data-platform="android"] .settings__row { padding: 16px; }
+html[data-platform="android"] .settings__actions { width: 100%; }
+html[data-platform="android"] .settings__shortcuts th,
+html[data-platform="android"] .settings__shortcuts td { padding-inline: 4px; overflow-wrap: anywhere; }
+html[data-platform="android"] .settings__shortcuts kbd { white-space: normal; }
+html[data-platform="android"] .stats__cards { grid-template-columns: repeat(auto-fit, minmax(min(100%, 130px), 1fr)); }
+html[data-platform="android"] .stats__card { padding: 16px; }
+html[data-platform="android"] .stats__value { font-size: 28px; }
+
+html[data-platform="android"] .sidebar > * { flex-shrink: 0; }
+html[data-platform="android"] .sidebar__playlists {
+  display: flex;
+  width: 44px;
+  align-items: center;
+}
+html[data-platform="android"] .sidebar__playlist { width: 44px; min-height: 44px; padding: 4px; }
+html[data-platform="android"] .sidebar__tile { width: 36px; height: 36px; }
+html[data-platform="android"] .sidebar__new-playlist { display: flex; width: 44px; min-height: 44px; margin: 0; }
+html[data-platform="android"] .sidebar__new-playlist .sidebar__label { display: none; }
+html[data-platform="android"] .sidebar__playlist-form {
+  display: grid;
+  gap: 12px;
+  position: fixed;
+  z-index: 2600;
+  top: 40px;
+  left: 60px;
+  right: 12px;
+  margin: 0;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-secondary);
+  box-shadow: 0 12px 32px #0008;
+}
+html[data-platform="android"] .sidebar__playlist-input { min-height: 44px; min-width: 0; }
+html[data-platform="android"] .sidebar__playlist-form-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+html[data-platform="android"] .sidebar__modes { margin-top: 12px; }
+
+html[data-platform="android"] .player-bar {
+  grid-template-rows: 44px minmax(0, 1fr);
+  align-content: center;
+  padding: 6px 12px;
+  gap: 2px;
+}
+html[data-platform="android"] .player-bar__now { flex: 1; min-height: 44px; }
+html[data-platform="android"] .player-bar__btn { min-width: 44px; min-height: 44px; }
+html[data-platform="android"] .player-bar__center { gap: 0; }
+html[data-platform="android"] .player-bar__controls { gap: 4px; }
+html[data-platform="android"] .player-bar__seek-row { min-height: 36px; }
+html[data-platform="android"] .player-bar__seek { min-width: 0; }
+html[data-platform="android"] .error-toast {
+  left: 8px;
+  right: 8px;
+  bottom: calc(152px + 8px);
+  max-width: none;
+  max-height: min(160px, 30dvh);
+  overflow-y: auto;
+  padding: 12px;
+  font-size: 12px;
+  line-height: 1.4;
+}
+html[data-platform="android"] .error-toast > button { min-height: 44px; }
+
+html[data-platform="android"] .nowplaying {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+html[data-platform="android"] .nowplaying__main { flex: none; overflow: visible; gap: 16px; padding: 16px; }
+html[data-platform="android"] .nowplaying__art { width: min(100%, 220px); }
+html[data-platform="android"] .nowplaying__panel { flex: none; overflow: visible; min-height: 220px; }
+html[data-platform="android"] .nowplaying__tabpanel { overflow: visible; }
+html[data-platform="android"] .nowplaying__title { font-size: 22px; }
+html[data-platform="android"] .nowplaying__queue-head { flex-wrap: wrap; gap: 12px; }
+html[data-platform="android"] .nowplaying__tabs { padding: 0 16px; gap: 24px; }
+html[data-platform="android"] .nowplaying__tab { padding-block: 12px; }
+html[data-platform="android"] .nowplaying__fact dd { overflow-wrap: anywhere; }
+
+html[data-platform="android"] .flow-view { grid-template-rows: auto minmax(120px, 1fr); }
+html[data-platform="android"] .flow-view__top { flex-direction: column; align-items: center; padding: 12px; }
+html[data-platform="android"] .flow-view__top > p { font-size: 12px; color: var(--text-secondary); text-align: center; }
+html[data-platform="android"] .flow-view__bottom { display: none; }
+html[data-platform="android"] .pomodoro { min-width: 0; padding: 0; }
+
+html[data-platform="android"] .mini-view { padding: 16px; cursor: default; }
+html[data-platform="android"] .mini-view__card { height: auto; min-height: 260px; gap: 24px; padding: 64px 20px 24px; }
+html[data-platform="android"] .mini-view__close { width: 44px; height: 44px; }
+html[data-platform="android"] .mini-view__art { width: 64px; height: 64px; }
+html[data-platform="android"] .mini-view__btn { min-width: 48px; min-height: 48px; }
+html[data-platform="android"] .mini-view__seek { min-height: 36px; }
+html[data-platform="android"] .zen-view__visualizer { display: grid; place-items: center; padding: 24px; }
+html[data-platform="android"] .zen-view__visualizer > p { max-width: 300px; font-size: 14px; color: var(--text-secondary); text-align: center; }
+html[data-platform="android"] .zen-view__title { overflow-wrap: anywhere; }
+html[data-platform="android"] .zen-view__btn,
+html[data-platform="android"] .zen-exit { min-width: 44px; min-height: 44px; }
+
+@media (max-height: 480px) and (min-width: 600px) {
+  html[data-platform="android"] .layout--normal,
+  html[data-platform="android"] .layout--flow { --player-height: 100px; }
+  html[data-platform="android"] .player-bar { grid-template-columns: minmax(100px, 1fr) minmax(180px, 1.5fr); grid-template-rows: minmax(0, 1fr); }
+  html[data-platform="android"] .player-bar__center { grid-row: 1; grid-column: 2; }
+  html[data-platform="android"] .error-toast { bottom: 108px; }
+  html[data-platform="android"] .yt-host--float { bottom: 108px; }
+  html[data-platform="android"] .mini-view { overflow-y: auto; align-items: safe center; }
+}
+
+@media (max-height: 480px) and (max-width: 599px) {
+  html[data-platform="android"] .layout--normal,
+  html[data-platform="android"] .layout--flow { --player-height: 88px; }
+  html[data-platform="android"] .player-bar { grid-template-rows: minmax(0, 1fr); }
+  html[data-platform="android"] .player-bar__track { display: none; }
+  html[data-platform="android"] .player-bar__center { grid-row: 1; }
+  html[data-platform="android"] .error-toast { bottom: 96px; }
+  html[data-platform="android"] .yt-host--float { bottom: 96px; }
+}

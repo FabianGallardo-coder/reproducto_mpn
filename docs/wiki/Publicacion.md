@@ -4,6 +4,8 @@
 
 El README, el sitio Pages, los iconos y las guías se versionan en el repositorio principal. Pages se despliega desde `main` mediante GitHub Actions. La Wiki es un repositorio separado: habilitarla en GitHub no la inicializa; necesita una primera página antes de aceptar un push.
 
+La adaptación Android se publica como código de prueba, sin APK ni Release en esta actualización. No confundas una compilación debug instalada en un dispositivo de desarrollo con una versión certificada para distribución. Los instaladores locales y la galería de capturas QA se conservan fuera de los archivos que se suben.
+
 ## Publicar la Wiki
 
 1. En GitHub, abrí la pestaña **Wiki** del repositorio.

@@ -420,6 +420,10 @@
         },
         {
           "type": "string",
+          "const": "allow-mobile-command"
+        },
+        {
+          "type": "string",
           "const": "allow-next"
         },
         {

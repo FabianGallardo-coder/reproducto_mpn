@@ -34,6 +34,10 @@ permissions = [
 ]
 
 [[permission]]
+identifier = "allow-mobile-command"
+commands.allow = ["mobile_command"]
+
+[[permission]]
 identifier = "allow-pause"
 commands.allow = ["pause"]
 

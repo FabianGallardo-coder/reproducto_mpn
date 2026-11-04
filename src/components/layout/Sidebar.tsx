@@ -118,7 +118,7 @@ export function Sidebar({ mode, onModeChange }: Props) {
         type="button"
         className="sidebar__new-playlist"
         aria-expanded={creating}
-        aria-label={collapsed ? "Nueva playlist" : undefined}
+        aria-label="Nueva playlist"
         title={collapsed ? "Nueva playlist" : undefined}
         onClick={() => {
           if (collapsed) onModeChange("normal");
@@ -150,6 +150,10 @@ export function Sidebar({ mode, onModeChange }: Props) {
             maxLength={60}
           />
           {formError && <p className="sidebar__playlist-error" role="alert">{formError}</p>}
+          <div className="sidebar__playlist-form-actions">
+            <button type="submit" className="button button--primary">Crear playlist</button>
+            <button type="button" className="button" onClick={closeForm}>Cancelar</button>
+          </div>
         </form>
       )}
 
@@ -238,7 +242,7 @@ function PlaylistLink({
         type="button"
         className={`sidebar__playlist ${active ? "sidebar__playlist--active" : ""}`}
         aria-current={active ? "page" : undefined}
-        aria-label={collapsed ? title : undefined}
+        aria-label={title}
         title={collapsed ? title : undefined}
         onClick={onClick}
       >

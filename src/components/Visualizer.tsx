@@ -1,5 +1,6 @@
 import { useRef, useEffect, useState, useCallback } from "react";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
+import { isAndroid } from "../lib/platform";
 
 interface Props {
   playing: boolean;
@@ -51,6 +52,7 @@ export function Visualizer({ playing }: Props) {
   // where a stale .then(unsub => unsub()) from the first effect desubscribes
   // the listener of the second mount.
   useEffect(() => {
+    if (isAndroid) return;
     let active = true;
     let unlisten: UnlistenFn | null = null;
 
@@ -341,6 +343,7 @@ export function Visualizer({ playing }: Props) {
     };
   }, [visMode]);
 
+  if (isAndroid) return <p>El visualizador de audio todavía no está disponible en Android.</p>;
   return (
     <div className="visualizer-container" style={{ width: "100%", height: "100%", position: "relative" }}>
       <canvas

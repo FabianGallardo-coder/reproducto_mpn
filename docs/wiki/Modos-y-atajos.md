@@ -11,7 +11,13 @@ Los modos se eligen debajo de las playlists. En ventanas estrechas y en Flow, la
 
 Cambiar entre Normal y Flow no debe detener la pista actual. Zen y Mini pausan YouTube para no reproducir un video oculto.
 
-## Pomodoro
+## Diferencias en Android
+
+Los cuatro modos son vistas dentro de la misma actividad; no hay ventanas flotantes sobre otras apps. Mini muestra una tarjeta compacta centrada. Zen mantiene salida y transporte táctiles visibles, sin depender de un mouse. La barra lateral permite desplazarse hasta las colecciones y los modos; **+** abre un formulario para crear playlists con botones Crear y Cancelar.
+
+Flow conserva el temporizador y la lista. Visualizador y letras no están disponibles en Android; se informa en pantalla. El teclado virtual no se abre automáticamente al entrar en Buscar, y el transporte se compacta mientras se escribe. Los atajos siguientes son principalmente para escritorio o teclado físico, no gestos del sistema Android.
+
+## Pomodoro y letras
 
 En Flow, **Iniciar** comienza el temporizador; **Pausar** lo detiene temporalmente y **Reiniciar** restaura el intervalo. El temporizador no sustituye los controles de reproducción y no necesita pausar la música.
 

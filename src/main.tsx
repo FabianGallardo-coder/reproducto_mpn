@@ -11,6 +11,10 @@ import "./styles/components/flow.css";
 import "./styles/components/mini-zen.css";
 import "./styles/components/sources.css";
 import "./styles/shell.css";
+import "./styles/mobile.css";
+import { isAndroid } from "./lib/platform";
+
+if (isAndroid) document.documentElement.dataset.platform = "android";
 
 window.addEventListener("error", (e) => {
   console.error("[global-error]", e.message, e.filename, e.lineno, e.error);

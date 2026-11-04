@@ -11,6 +11,8 @@ import { usePlayerActions, usePlayerState } from "../hooks/usePlayerStore";
 import { youtubeItemTrack, type YouTubeItem } from "../types/youtube";
 import type { RadioStation, Track } from "../types";
 import type { PageProps } from "./pageTypes";
+import { isAndroid } from "../lib/platform";
+import { MobileYouTubeLink } from "../components/media/MobileYouTubeLink";
 
 type Scope = "todo" | "local" | "youtube" | "radio";
 
@@ -57,7 +59,7 @@ export function BuscarPage({ controls }: PageProps) {
     api.listRadioStations().then(setStations).catch(() => setStations([]));
   }, []);
 
-  const wantsVideos = (scope === "todo" || scope === "youtube") && query.length >= MIN_QUERY && isOnline;
+  const wantsVideos = !isAndroid && (scope === "todo" || scope === "youtube") && query.length >= MIN_QUERY && isOnline;
 
   useEffect(() => {
     if (!wantsVideos) {
@@ -152,7 +154,7 @@ export function BuscarPage({ controls }: PageProps) {
           aria-label="Buscar música"
           placeholder="¿Qué querés escuchar?…"
           value={input}
-          autoFocus
+          autoFocus={!isAndroid}
           autoComplete="off"
           spellCheck={false}
           onChange={(event) => setInput(event.target.value)}
@@ -163,6 +165,7 @@ export function BuscarPage({ controls }: PageProps) {
           <Chip key={entry.id} active={scope === entry.id} onClick={() => setScope(entry.id)}>{entry.label}</Chip>
         ))}
       </div>
+      {isAndroid && <MobileYouTubeLink />}
 
       {status && <p className="search__status" role="status">{status}</p>}
       {!isOnline && showVideos && <p className="search__status" role="status">Sin conexión: solo se busca en tu biblioteca y emisoras.</p>}

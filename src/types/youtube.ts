@@ -54,6 +54,23 @@ export function youtubePath(id: string): string {
   return `${YOUTUBE_PATH_PREFIX}${id}`;
 }
 
+export function youtubeIdFromUrl(value: string): string | null {
+  try {
+    const url = new URL(value);
+    if (url.protocol !== "https:" && url.protocol !== "http:") return null;
+    const host = url.hostname.toLowerCase();
+    const segments = url.pathname.split("/").filter(Boolean);
+    const id = host === "youtu.be" ? segments[0]
+      : ["youtube.com", "www.youtube.com", "m.youtube.com"].includes(host)
+        ? url.pathname === "/watch" ? url.searchParams.get("v")
+          : ["shorts", "embed", "live"].includes(segments[0]) ? segments[1] : null
+        : null;
+    return id && YOUTUBE_ID_PATTERN.test(id) ? id : null;
+  } catch {
+    return null;
+  }
+}
+
 export function youtubeIdFromPath(path: string): string | null {
   if (!path.startsWith(YOUTUBE_PATH_PREFIX)) return null;
   const id = path.slice(YOUTUBE_PATH_PREFIX.length);

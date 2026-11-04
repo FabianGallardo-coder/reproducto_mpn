@@ -79,6 +79,16 @@ No dejes el puerto de depuración abierto ni lo expongas fuera de localhost.
 
 ## Evidencia y límites
 
+### Adaptación Android en pruebas
+
+El APK de desarrollo usa el selector de documentos de Android y conserva permisos de lectura, sin convertir las URI `content://` a rutas de escritorio. Para probar el escaneo, seleccioná una carpeta de QA con audios válidos y un archivo de audio dañado: los válidos deben aparecer y el archivo omitido debe indicarse en un aviso. Un permiso revocado debe seguir produciendo un error, no una biblioteca vacía aparentemente correcta.
+
+La compilación del APK no certifica reproducción, controles de notificación ni continuidad con pantalla bloqueada. Estas funciones requieren pruebas en un dispositivo real. La suite nativa de Windows no valida Android.
+
+La regresión visual móvil se ejecuta con `npx playwright test mobile.spec.ts`. Simula el puente Android y comprueba anchos de 320, 360 y 430 px, además de horizontal a 800 × 360 px: páginas sin desbordamiento horizontal, transporte dentro del viewport, objetivos táctiles de 44 px, creación de playlists accesible, paneles de Reproduciendo desplazables, salida de Zen visible sin mouse y tarjeta Mini compacta. También verifica que Buscar no enfoque automáticamente el teclado y que el iframe oficial conserve al menos 200 × 200 px.
+
+Complementá estos casos con capturas del APK instalado: Inicio (incluido contenido inferior), Buscar con y sin teclado, Biblioteca y colecciones, formulario de radio y playlist, Estadísticas, Configuración, Cola/Letra/Detalles, Flow, Zen, Mini y YouTube flotante/acoplado. Los insets de Android, el teclado real y el servicio de YouTube no se certifican con simulaciones de navegador.
+
 El informe nativo queda en `playwright-report/native`; los adjuntos, en `test-results/native`. Abrilo con:
 
 ```powershell

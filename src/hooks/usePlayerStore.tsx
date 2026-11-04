@@ -15,10 +15,11 @@ import type { Track, RepeatMode, RadioStation, CustomPlaylist } from "../types";
 import { youtubeIdFromPath, youtubeItemTrack, type YouTubeItem } from "../types/youtube";
 import type { YouTubeController } from "./useYouTubePlayer";
 import { readAutoplay } from "../lib/autoplay";
+import { invoke, isAndroid } from "../lib/platform";
 
 /** Compares local paths regardless of the `\\?\` prefix added by canonicalize. */
 function pathKey(path: string): string {
-  if (/^https?:\/\//i.test(path)) return path;
+  if (/^(https?|content):\/\//i.test(path)) return path;
   return path.replace(/^\\\\\?\\/, "").replace(/\//g, "\\").toLowerCase();
 }
 
@@ -133,6 +134,8 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     try {
       const result = await api.scanFolder(path, (p) => {
         setScanProgress({ processed: p.processed, found: p.found });
+      }, (warnings) => {
+        setError(`Se omitieron ${warnings.length} archivos de audio. ${warnings.slice(0, 3).join(". ")}${warnings.length > 3 ? "." : ""}`);
       });
       setTracks(result);
       setCurrentIndex(-1);
@@ -251,7 +254,13 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   const playYouTube = useCallback(async (item: YouTubeItem, queueItems?: YouTubeItem[]) => {
     const list = (queueItems?.length ? queueItems : [item]).map(youtubeItemTrack);
     setError(null);
-    await api.pause().catch(() => {});
+    try {
+      if (isAndroid) await invoke<void>("prepare_youtube");
+      else await api.pause();
+    } catch (reason) {
+      setError(`No se pudo detener el audio anterior: ${String(reason)}`);
+      throw reason;
+    }
     queueRef.current = list;
     setQueue(list);
     setCurrentIndex(-1);
@@ -565,7 +574,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   tracksRef.current = tracks;
 
   useEffect(() => {
-    if ((playing || currentTrack) && !isYouTubeTrack(currentTrack)) {
+    if ((isAndroid || playing || currentTrack) && !isYouTubeTrack(currentTrack)) {
       positionInterval.current = setInterval(async () => {
         try {
           const state = await api.getState();
