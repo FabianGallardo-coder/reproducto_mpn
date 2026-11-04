@@ -17,9 +17,8 @@ impl ConfigStore {
             {
                 Some(cfg) => cfg,
                 None => {
-                    // Corrupt or unreadable config: warn, overwrite with defaults, continue.
-                    eprintln!(
-                        "[flowplayer] config at {} was unreadable; restoring defaults",
+                    log::warn!(
+                        "config at {} was unreadable; restoring defaults",
                         path.display()
                     );
                     let cfg = AppConfig::default();
@@ -45,18 +44,23 @@ impl ConfigStore {
         &self.config
     }
 
+    fn atomic_write(&self, data: &str) -> Result<(), AppError> {
+        let tmp = self.path.with_extension("tmp");
+        std::fs::write(&tmp, data)?;
+        std::fs::rename(&tmp, &self.path)?;
+        Ok(())
+    }
+
     pub fn set(&mut self, config: AppConfig) -> Result<(), AppError> {
         self.config = config;
         let data = serde_json::to_string_pretty(&self.config)?;
-        std::fs::write(&self.path, data)?;
-        Ok(())
+        self.atomic_write(&data)
     }
 
     pub fn update(&mut self, f: impl FnOnce(&mut AppConfig)) -> Result<(), AppError> {
         f(&mut self.config);
         let data = serde_json::to_string_pretty(&self.config)?;
-        std::fs::write(&self.path, data)?;
-        Ok(())
+        self.atomic_write(&data)
     }
 }
 
@@ -82,6 +86,54 @@ mod tests {
         assert!(cfg.last_track_index.is_none());
 
         let _ = std::fs::remove_file(&path);
+    }
+
+    fn assert_legacy_repeat_loads(value: &str, expected: RepeatMode, suffix: &str) {
+        let path = temp_path(suffix);
+        let _ = std::fs::remove_file(&path);
+        let persisted = format!(
+            r#"{{
+                "music_folder": "/music/library",
+                "volume": 0.37,
+                "shuffle": true,
+                "repeat": "{value}",
+                "last_track_index": 7,
+                "last_position": 12.5,
+                "favorites": ["/music/favorite.mp3"],
+                "custom_playlists": [{{"name": "Road trip", "tracks": ["/music/track.mp3"]}}]
+            }}"#
+        );
+        std::fs::write(&path, persisted).unwrap();
+
+        let store = ConfigStore::load(&path).unwrap();
+        let cfg = store.get();
+        assert_eq!(cfg.repeat, expected, "legacy repeat spelling {value}");
+        assert_eq!(cfg.music_folder, "/music/library");
+        assert!((cfg.volume - 0.37).abs() < f32::EPSILON);
+        assert!(cfg.shuffle);
+        assert_eq!(cfg.last_track_index, Some(7));
+        assert!((cfg.last_position - 12.5).abs() < f64::EPSILON);
+        assert_eq!(cfg.favorites, vec!["/music/favorite.mp3"]);
+        assert_eq!(cfg.custom_playlists.len(), 1);
+        assert_eq!(cfg.custom_playlists[0].name, "Road trip");
+        assert_eq!(cfg.custom_playlists[0].tracks, vec!["/music/track.mp3"]);
+
+        let _ = std::fs::remove_file(&path);
+    }
+
+    #[test]
+    fn load_preserves_config_when_repeat_uses_legacy_off_spelling() {
+        assert_legacy_repeat_loads("Off", RepeatMode::Off, "legacy_repeat_off");
+    }
+
+    #[test]
+    fn load_preserves_config_when_repeat_uses_legacy_all_spelling() {
+        assert_legacy_repeat_loads("All", RepeatMode::All, "legacy_repeat_all");
+    }
+
+    #[test]
+    fn load_preserves_config_when_repeat_uses_legacy_one_spelling() {
+        assert_legacy_repeat_loads("One", RepeatMode::One, "legacy_repeat_one");
     }
 
     #[test]
@@ -158,5 +210,73 @@ mod tests {
         assert_eq!(store.get().volume, 0.8);
 
         let _ = std::fs::remove_file(&path);
+    }
+
+    #[test]
+    fn atomic_write_does_not_leave_tmp_on_success() {
+        let path = temp_path("atomic_no_tmp");
+        let _ = std::fs::remove_file(&path);
+        let tmp = path.with_extension("tmp");
+        let _ = std::fs::remove_file(&tmp);
+
+        let mut store = ConfigStore::load(&path).unwrap();
+        store.update(|c| c.volume = 0.1).unwrap();
+
+        assert!(
+            !tmp.exists(),
+            ".tmp file should not remain after successful rename"
+        );
+        let _ = std::fs::remove_file(&path);
+    }
+
+    #[test]
+    fn set_overwrites_previous_config() {
+        let path = temp_path("set_overwrite");
+        let _ = std::fs::remove_file(&path);
+
+        let mut store = ConfigStore::load(&path).unwrap();
+        store.update(|c| c.volume = 0.3).unwrap();
+        store.update(|c| c.volume = 0.9).unwrap();
+
+        let reloaded = ConfigStore::load(&path).unwrap();
+        assert_eq!(reloaded.get().volume, 0.9);
+        let _ = std::fs::remove_file(&path);
+    }
+
+    #[test]
+    fn update_closures_see_previous_state() {
+        let path = temp_path("update_chain");
+        let _ = std::fs::remove_file(&path);
+
+        let mut store = ConfigStore::load(&path).unwrap();
+        store
+            .update(|c| {
+                c.volume = 0.1;
+                c.shuffle = true;
+            })
+            .unwrap();
+        store
+            .update(|c| {
+                c.volume = c.volume + 0.1;
+            })
+            .unwrap();
+
+        let cfg = store.get();
+        assert!((cfg.volume - 0.2).abs() < f32::EPSILON);
+        assert!(cfg.shuffle);
+        let _ = std::fs::remove_file(&path);
+    }
+
+    #[test]
+    fn default_config_values() {
+        let cfg = AppConfig::default();
+        assert_eq!(cfg.volume, 0.8);
+        assert!(!cfg.shuffle);
+        assert_eq!(cfg.repeat, crate::audio::playlist::RepeatMode::All);
+        assert!(cfg.last_track_index.is_none());
+        assert!((cfg.last_position - 0.0).abs() < f64::EPSILON);
+        assert!(cfg.favorites.is_empty());
+        assert!(cfg.custom_radio_stations.is_empty());
+        assert!(cfg.custom_playlists.is_empty());
     }
 }

@@ -91,4 +91,53 @@ describe("Lyrics", () => {
     });
     expect(screen.getByText("Second line")).toBeInTheDocument();
   });
+
+  it("cancels fetch on unmount", async () => {
+    let resolveFn: (v: any) => void;
+    vi.mocked(api.fetchLyrics).mockReturnValue(new Promise((r) => { resolveFn = r; }));
+    const { unmount } = render(<Lyrics artist="A" title="B" position={0} />);
+    unmount();
+    resolveFn!({ id: 1, track_name: "B", artist_name: "A", instrumental: false, plain_lyrics: "x", synced_lyrics: null });
+    await vi.advanceTimersByTimeAsync(100);
+    expect(screen.queryByText("x")).not.toBeInTheDocument();
+  });
+
+  it("re-fetches when artist changes", async () => {
+    vi.mocked(api.fetchLyrics).mockResolvedValue({
+      id: 5, track_name: "Song", artist_name: "New Artist", instrumental: false,
+      plain_lyrics: "new", synced_lyrics: null,
+    });
+    const { rerender } = render(<Lyrics artist="Old" title="Song" position={0} />);
+    await waitFor(() => {
+      expect(api.fetchLyrics).toHaveBeenCalledTimes(1);
+    });
+    rerender(<Lyrics artist="New" title="Song" position={0} />);
+    await waitFor(() => {
+      expect(api.fetchLyrics).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  it("re-fetches when title changes", async () => {
+    vi.mocked(api.fetchLyrics).mockResolvedValue({
+      id: 6, track_name: "New Song", artist_name: "Artist", instrumental: false,
+      plain_lyrics: "y", synced_lyrics: null,
+    });
+    const { rerender } = render(<Lyrics artist="A" title="Old" position={0} />);
+    await waitFor(() => {
+      expect(api.fetchLyrics).toHaveBeenCalledTimes(1);
+    });
+    rerender(<Lyrics artist="A" title="New" position={0} />);
+    await waitFor(() => {
+      expect(api.fetchLyrics).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  it("handles fetch error gracefully", async () => {
+    vi.mocked(api.fetchLyrics).mockRejectedValue(new Error("network error"));
+    render(<Lyrics artist="A" title="B" position={0} />);
+    await waitFor(() => {
+      expect(screen.queryByText("Syncing lyrics...")).not.toBeInTheDocument();
+    });
+    expect(screen.queryByText("Instrumental")).not.toBeInTheDocument();
+  });
 });

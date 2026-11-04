@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 interface Props {
   onComplete?: () => void;
@@ -11,6 +11,8 @@ export function PomodoroTimer({ onComplete }: Props) {
   const [seconds, setSeconds] = useState(WORK_MINUTES * 60);
   const [isWork, setIsWork] = useState(true);
   const [running, setRunning] = useState(false);
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
 
   const reset = useCallback(() => {
     setSeconds(WORK_MINUTES * 60);
@@ -18,7 +20,6 @@ export function PomodoroTimer({ onComplete }: Props) {
     setRunning(false);
   }, []);
 
-  // Interval to decrement seconds
   useEffect(() => {
     if (!running) return;
     const id = setInterval(() => {
@@ -27,34 +28,33 @@ export function PomodoroTimer({ onComplete }: Props) {
     return () => clearInterval(id);
   }, [running]);
 
-  // Transition timer mode when seconds hit 0
   useEffect(() => {
     if (seconds === 0) {
       if (isWork) {
         setIsWork(false);
         setSeconds(BREAK_MINUTES * 60);
-        onComplete?.();
+        onCompleteRef.current?.();
       } else {
         setIsWork(true);
         setSeconds(WORK_MINUTES * 60);
       }
     }
-  }, [seconds, isWork, onComplete]);
+  }, [seconds, isWork]);
 
   const mins = Math.floor(seconds / 60);
   const secs = seconds % 60;
 
   return (
     <div className="pomodoro">
-      <div className="pomodoro__label">{isWork ? "Work" : "Break"}</div>
+      <div className="pomodoro__label">{isWork ? "Enfoque" : "Descanso"}</div>
       <div className="pomodoro__time">
         {String(mins).padStart(2, "0")}:{String(secs).padStart(2, "0")}
       </div>
       <div className="pomodoro__actions">
         <button onClick={() => setRunning(!running)} className="pomodoro__btn">
-          {running ? "Pause" : "Start"}
+          {running ? "Pausar" : "Iniciar"}
         </button>
-        <button onClick={reset} className="pomodoro__btn">Reset</button>
+        <button onClick={reset} className="pomodoro__btn">Reiniciar</button>
       </div>
     </div>
   );

@@ -10,6 +10,18 @@ export interface Track {
   duration: number;
 }
 
+export interface RadioStation {
+  name: string;
+  genre: string;
+  url: string;
+  description: string;
+}
+
+export interface CustomPlaylist {
+  name: string;
+  tracks: string[];
+}
+
 export interface AppConfig {
   music_folder: string;
   volume: number;
@@ -17,6 +29,9 @@ export interface AppConfig {
   repeat: RepeatMode;
   last_track_index: number | null;
   last_position: number;
+  favorites: string[];
+  custom_playlists: CustomPlaylist[];
+  custom_radio_stations: RadioStation[];
 }
 
 export interface PlaybackState {

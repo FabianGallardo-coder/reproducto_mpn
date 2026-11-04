@@ -1,85 +1,64 @@
-import { useState } from "react";
+import { useEffect } from "react";
 import type { Mode } from "../../types";
 import { Sidebar } from "./Sidebar";
 import { PlayerBar } from "./PlayerBar";
-import { RadioPanel } from "../RadioPanel";
-import { YouTubePanel } from "../YouTubePanel";
-import { api } from "../../lib/api";
+import { YouTubeHost } from "../nowplaying/YouTubeHost";
+import { YouTubeStageProvider } from "../nowplaying/YouTubeStage";
 import { usePlayerState, usePlayerActions } from "../../hooks/usePlayerStore";
+import { youtubeIdFromPath } from "../../types/youtube";
 
 interface Props {
   mode: Mode;
   onModeChange: (mode: Mode) => void;
-  onSearch?: (query: string) => void;
   children: React.ReactNode;
 }
 
-export function AppLayout({
-  mode,
-  onModeChange,
-  onSearch,
-  children,
-}: Props) {
-  const [sidebarTab, setSidebarTab] = useState<"library" | "radio" | "youtube">("library");
-  const { error } = usePlayerState();
-  const { clearError } = usePlayerActions();
+export function AppLayout({ mode, onModeChange, children }: Props) {
+  const { error, currentTrack } = usePlayerState();
+  const { clearError, pause } = usePlayerActions();
+  const simple = mode === "zen" || mode === "mini";
+  const youtubeActive = currentTrack ? youtubeIdFromPath(currentTrack.path) !== null : false;
 
-  const handlePlayUrl = (url: string) => {
-    api.playUrl(url).catch(() => {});
-  };
+  useEffect(() => {
+    if (!error) return;
+    const timer = setTimeout(clearError, 5000);
+    return () => clearTimeout(timer);
+  }, [error, clearError]);
 
-  const isSimple = mode === "zen" || mode === "mini";
-  const layoutKey = isSimple ? "simple" : "full";
+  // Zen and Mini have no room for the (always visible) official player, so playback pauses instead of hiding it.
+  useEffect(() => {
+    if (simple && youtubeActive) void pause();
+  }, [simple, youtubeActive, pause]);
 
-  if (isSimple) {
+  if (simple) {
     return (
-      <div key={layoutKey} className={`layout layout--${mode}`}>
-        {error && (
-          <div className="error-toast" onClick={clearError}>
-            {error}
-          </div>
-        )}
+      <div key="simple" className={`layout layout--${mode}`}>
+        {error && <ErrorToast error={error} onDismiss={clearError} />}
         <div className="layout__zen-content">{children}</div>
       </div>
     );
   }
 
   return (
-    <div key={layoutKey} className={`layout layout--${mode}`}>
-      {error && (
-        <div className="error-toast" onClick={clearError}>
-          {error}
-        </div>
-      )}
-      <Sidebar mode={mode} onModeChange={onModeChange} onSearch={onSearch}>
-        <div className="sidebar__tabs">
-          <button
-            className={`sidebar__tab ${sidebarTab === "library" ? "sidebar__tab--active" : ""}`}
-            onClick={() => setSidebarTab("library")}
-          >
-            Library
-          </button>
-          <button
-            className={`sidebar__tab ${sidebarTab === "radio" ? "sidebar__tab--active" : ""}`}
-            onClick={() => setSidebarTab("radio")}
-          >
-            Radio
-          </button>
-          <button
-            className={`sidebar__tab ${sidebarTab === "youtube" ? "sidebar__tab--active" : ""}`}
-            onClick={() => setSidebarTab("youtube")}
-          >
-            YT
-          </button>
-        </div>
-        {sidebarTab === "radio" ? (
-          <RadioPanel onPlay={handlePlayUrl} />
-        ) : sidebarTab === "youtube" ? (
-          <YouTubePanel onPlay={handlePlayUrl} />
-        ) : null}
-      </Sidebar>
-      <main className="layout__main">{children}</main>
-      <PlayerBar />
+    <YouTubeStageProvider>
+      <div key="full" className={`layout layout--${mode}`}>
+        {error && <ErrorToast error={error} onDismiss={clearError} />}
+        <Sidebar mode={mode} onModeChange={onModeChange} />
+        <main className="layout__main">{children}</main>
+        <PlayerBar onOpenNowPlaying={() => onModeChange("normal")} />
+        <YouTubeHost onOpenNowPlaying={() => onModeChange("normal")} />
+      </div>
+    </YouTubeStageProvider>
+  );
+}
+
+function ErrorToast({ error, onDismiss }: { error: string; onDismiss: () => void }) {
+  return (
+    <div className="error-toast">
+      <span role="alert" aria-live="assertive">{error}</span>
+      <button type="button" onClick={onDismiss}       aria-label="Cerrar error">
+              Cerrar
+      </button>
     </div>
   );
 }

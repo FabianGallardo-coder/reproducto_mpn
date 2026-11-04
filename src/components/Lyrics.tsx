@@ -33,19 +33,22 @@ export function Lyrics({ artist, title, album, duration, position }: Props) {
 
   useEffect(() => {
     if (!artist || !title) return;
+    let cancelled = false;
     setLoading(true);
     setTimedOut(false);
-    const timer = setTimeout(() => setTimedOut(true), 4000);
+    const timer = setTimeout(() => { if (!cancelled) setTimedOut(true); }, 4000);
     api.fetchLyrics(artist, title, album, duration).then((l) => {
+      if (cancelled) return;
       clearTimeout(timer);
       setLyrics(l);
       setLoading(false);
     }).catch(() => {
+      if (cancelled) return;
       clearTimeout(timer);
       setLyrics(null);
       setLoading(false);
     });
-    return () => clearTimeout(timer);
+    return () => { cancelled = true; clearTimeout(timer); };
   }, [artist, title, album, duration]);
 
   const syncedLines = lyrics?.synced_lyrics ? parseLrc(lyrics.synced_lyrics) : null;

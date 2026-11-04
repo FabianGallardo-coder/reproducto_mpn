@@ -1,180 +1,117 @@
-# FlowPlayer
+<div align="center">
+  <img src="public/favicon.svg" width="96" height="96" alt="Icono de FlowPlayer">
+  <h1>FlowPlayer</h1>
+  <p>Tu biblioteca, YouTube y radio en un reproductor de escritorio.</p>
+  <p>
+    <a href="https://fabiangallardo-coder.github.io/reproducto_mpn/">Sitio web</a> ·
+    <a href="docs/wiki/Primeros-pasos.md">Primeros pasos</a> ·
+    <a href="https://github.com/FabianGallardo-coder/reproducto_mpn/wiki">Wiki</a> ·
+    <a href="docs/wiki/Desarrollo.md">Desarrollo</a> ·
+    <a href="https://github.com/FabianGallardo-coder/reproducto_mpn/issues">Reportar un problema</a>
+  </p>
+</div>
 
-> Reproductor multimedia multiplataforma con tres modos de UI (Normal, Flow, Zen) y bajo consumo de memoria.
+FlowPlayer reúne música local, radio por Internet y el reproductor oficial de YouTube en una interfaz oscura con acentos violetas. Está construido con Tauri 2, Rust y React.
 
-## Descripción
+![Biblioteca de FlowPlayer con archivos de prueba](docs/assets/library.png)
 
-FlowPlayer es un reproductor multimedia construido con Tauri 2.0, Rust y React 18 + TypeScript. Ofrece tres modos de UI diseñados para diferentes estados de enfoque y consumo de medios, manteniendo un bajo consumo de recursos (<150 MB de RAM en idle).
+## Qué podés hacer
 
-## Características
+- Explorar archivos locales, marcar favoritos y crear playlists.
+- Buscar en la biblioteca, en YouTube o entre las emisoras disponibles.
+- Reproducir YouTube en un video flotante o acoplado a **Reproduciendo**, con cola y autoplay.
+- Guardar descargas de material propio o autorizado y escucharlas sin conexión.
+- Escuchar radio, agregar emisoras y consultar letras cuando están disponibles.
+- Consultar historial y estadísticas de 7 días, 30 días o todo el historial guardado.
+- Personalizar el acento y elegir el modo de inicio.
 
-- **Multiplatform**: Windows 10+, macOS 12+, Ubuntu 22.04+
-- **Tres modos de UI**:
-  - **Modo Normal**: Interfaz completa con barra lateral expandible, vista de 2 columnas (track list + Now Playing) y PlayerBar persistente.
-  - **Modo Flow**: Enfoque en productividad con barra lateral colapsable, Pomodoro timer, visualizador de espectro y letras sincronizadas.
-  - **Modo Zen**: Experiencia inmersiva con visualizador a pantalla completa, fondo transparente (se ve el escritorio), controles flotantes en panel glass y salida con Escape.
-- **Diseño visual** (inspirado en Valentine):
-  - Glassmorphism profundo: `backdrop-filter: blur(40px)`, bordes glass `rgba(255,255,255,0.15)`.
-  - Album art difuminado como fondo de toda la app (`blur(80px) brightness(0.3) opacity(0.7)`).
-  - Letras sincronizadas con efecto neon glow (`text-shadow` con color accent).
-  - Animaciones spring en botones (`cubic-bezier(0.34, 1.56, 0.64, 1)`).
-  - Sombras profundas en album art (`rgba(0,0,0,0.6)`, radio 40px).
-  - Tipografía monoespaciada en tiempos (`tabular-nums`).
-- **Reproducción de audio**:
-  - Archivos locales (MP3, FLAC, WAV, OGG, AAC, etc.)
-  - Streaming de radio por Internet (SomaFM presets)
-  - YouTube metadata + streaming (yt-dlp sidecar)
-  - Letras sincronizadas (LRCLib API + parser LRC)
-- **Gestión de listas de reproducción**: crear, guardar, cargar, reordenar, mezclar y repetir.
-- **Visualizador de audio**: barras capsula/pill con brillo aditivo (`globalCompositeOperation: "lighter"`), 64 bins, idle breathing animation.
-- **Media Session API**: controles del sistema operativo integrados.
-- **Listas virtualizadas**: renderizado vano para colecciones grandes (52px rows, buffer 5, sin dependencias externas).
-- **Keyboard shortcuts**: Space (play/pause), Alt+N/F/Z (modos), Escape (salir zen), Ctrl+arrows (seek/volume), Tab (cycle), S (shuffle), R (repeat), Ctrl+O (open folder).
-- **Optimización de recursos**:
-  - Tipado estricto de TypeScript (sin `any`).
-  - Manejo adecuado de errores en Rust (sin `unwrap`/`expect`).
-  - Caché eficiente de metadata con base de datos embebida `sled`.
-- **Pruebas**: 130 tests frontend (vitest) + 17 tests backend (Rust) + Playwright QA.
-- **QA Skills**: `frontend-audit` (análisis de código) + `frontend-qa` (testing visual con Playwright), con registries persistentes en `.opencode/registries/`.
+### Cuatro modos
 
-## Estructura del proyecto
+| Modo | Uso |
+|---|---|
+| **Normal** | Biblioteca, páginas y controles persistentes. |
+| **Flow** | Lista de pistas, Pomodoro, visualizador y letras. Los accesos laterales abren la página elegida en Normal sin detener la música. |
+| **Zen** | Visualizador y controles esenciales. Escape vuelve a Normal. |
+| **Mini** | Tarjeta compacta y opaca con transporte y progreso. |
 
-```
-src/
-  ├── components/
-  │   ├── layout/              # AppLayout, PlayerBar, Sidebar
-  │   ├── modes/
-  │   │   ├── normal/          # NormalView (2-column: track list + now playing)
-  │   │   ├── flow/            # FlowView (pomodoro + visualizer + lyrics + tracks)
-  │   │   └── zen/             # ZenView (transparent background + capsule visualizer)
-  │   ├── ui/                  # Icons (14 SVGs)
-  │   ├── TrackList.tsx        # Virtual list (52px rows, absolute positioning)
-  │   ├── Visualizer.tsx       # Canvas capsule bars with additive glow (64 bins)
-  │   ├── Lyrics.tsx           # LRC parser + neon glow display
-  │   ├── PomodoroTimer.tsx    # Focus timer
-  │   ├── RadioPanel.tsx       # SomaFM stations
-  │   └── ErrorBoundary.tsx    # React error boundary
-  ├── hooks/                   # usePlayerStore (Context), useMode, useShortcuts, useMediaSession, useOnlineStatus, useCoverArt
-  ├── lib/
-  │   ├── api.ts               # Tauri IPC wrappers (typed invoke calls)
-  │   └── events.ts            # Event name constants
-  ├── types/                   # Track, PlaybackState, AppConfig, Mode, RepeatMode
-  ├── styles/globals.css       # Design tokens, glassmorphism, neon lyrics, responsive
-  ├── App.tsx                  # Main app + background album art blur layer
-  └── main.tsx                 # Entry point
+YouTube utiliza un iframe visible: no se extrae audio para reproducir ni se evaden anuncios o restricciones. Entrar en Zen o Mini pausa el video porque esos modos no tienen espacio para mostrarlo.
 
-src-tauri/src/
-  ├── lib.rs                   # Tauri builder, state setup, event bridge
-  ├── main.rs                  # Entry point
-  ├── audio/                   # player.rs, playlist.rs, analyzer.rs, track_info.rs
-  ├── commands/                # audio.rs, config.rs, library.rs, integrations.rs, window.rs
-  ├── config/                  # store.rs (sled), models.rs
-  ├── metadata/                # id3.rs (lofty), cache.rs (sled)
-  ├── lyrics.rs                # LRCLib API client
-  ├── radio.rs                 # SomaFM presets
-  ├── youtube.rs               # yt-dlp integration
-  └── error.rs                 # AppError enum (thiserror)
-```
+<details>
+<summary>Ver Flow y Mini</summary>
 
-## Tecnologías principales
+![Modo Flow con música de prueba](docs/assets/flow.png)
 
-- **Tauri 2.0** – Framework para aplicaciones de escritorio ligeras (ventana transparente).
-- **Rust** – Lógica de backend, procesamiento de audio y seguridad.
-- **React 18 + TypeScript 5.0** – Interfaz de usuario con tipado estricto.
-- **rodio** – Biblioteca de reproducción de audio en Rust.
-- **lofty** – Lectura de metadata de audio (ID3, Vorbis, etc.).
-- **sled** – Base de datos embebida para caché de metadata y configuración.
-- **reqwest** – HTTP client para LRCLib API.
-- **yt-dlp** – Herramienta para obtener audio de YouTube.
+![Modo Mini con música de prueba](docs/assets/mini.png)
 
-## Cómo comenzar
+Las capturas proceden de una sesión de QA con archivos originales silenciosos, no de una biblioteca personal. Se ocultó la ruta local del equipo.
+</details>
 
-### Requisitos previos
+## Ejecutar en Windows
 
-- [Rust](https://www.rust-lang.org/tools/install) (versión estable)
-- [Node.js](https://nodejs.org/) (>= 18)
-- [npm](https://www.npmjs.com/)
-- Dependencias del sistema para Tauri (consultar [docs de Tauri](https://tauri.app/v2/guides/getting-started/prerequisites))
+La validación nativa actual se realizó en Windows con WebView2. macOS y Linux necesitan validación adicional; no se ofrecen aquí garantías de compatibilidad ni cifras de rendimiento sin medir.
 
-### Instalación
+Requisitos:
 
-```bash
-# Clonar el repositorio
-git clone https://github.com/tu-usuario/flowplayer.git
-cd flowplayer
+- Node.js 22 o superior y npm.
+- Rust estable con el toolchain MSVC.
+- Visual Studio Build Tools con la carga de trabajo de C++ y Windows SDK.
+- Microsoft Edge WebView2 Runtime.
+- Git.
 
-# Instalar dependencias del frontend
-npm install
-
-# Construir y ejecutar en modo desarrollo
+```powershell
+git clone https://github.com/FabianGallardo-coder/reproducto_mpn.git
+Set-Location reproducto_mpn
+npm ci
 npm run tauri dev
 ```
 
-### Testing
+En **Configuración**, elegí tu carpeta de música. Para YouTube o radio hace falta conexión. La búsqueda y las descargas de YouTube usan el ejecutable `yt-dlp` configurado como sidecar.
 
-```bash
-# Frontend tests
-npx vitest run
+El servidor Vite por sí solo no reemplaza la app de escritorio: necesita el puente IPC de Tauri. GitHub Pages presenta el proyecto y su documentación, no ejecuta el reproductor.
 
-# Backend checks
-cargo check --manifest-path src-tauri/Cargo.toml
+## Documentación
 
-# TypeScript typecheck
-npx tsc --noEmit
+| Guía | Contenido |
+|---|---|
+| [Primeros pasos](docs/wiki/Primeros-pasos.md) | Preparar el equipo y reproducir la primera pista. |
+| [Biblioteca y playlists](docs/wiki/Biblioteca-y-playlists.md) | Archivos, favoritos, colecciones y búsquedas. |
+| [YouTube y radio](docs/wiki/YouTube-y-radio.md) | Video, descargas, emisoras y restricciones. |
+| [Modos y atajos](docs/wiki/Modos-y-atajos.md) | Ventanas, Pomodoro y teclado. |
+| [Configuración y datos](docs/wiki/Configuracion-y-datos.md) | Preferencias, almacenamiento y respaldos. |
+| [Desarrollo](docs/wiki/Desarrollo.md) | Arquitectura, comandos, iconos y empaquetado. |
+| [QA](docs/wiki/QA.md) | Pruebas simuladas, Tauri real y controles manuales. |
+| [Solución de problemas](docs/wiki/Solucion-de-problemas.md) | Audio, YouTube, archivos y errores frecuentes. |
+| [Publicación](docs/wiki/Publicacion.md) | Wiki y sitio GitHub Pages. |
+
+## Verificar cambios
+
+```powershell
+npm run typecheck
+npm run typecheck:qa
+npm run lint
+npm test
+npx playwright install chromium
+npm run test:e2e
+cargo test --manifest-path src-tauri\Cargo.toml
+cargo clippy --manifest-path src-tauri\Cargo.toml -- -D warnings
 ```
 
-### Empaquetado para producción
+La suite de navegador simula Tauri y YouTube. Para comprobar reproducción y persistencia reales, seguí la [guía de QA nativo](docs/wiki/QA.md). Los diálogos del sistema, la audibilidad, los controles multimedia y el instalador requieren comprobaciones manuales.
 
-```bash
+Para empaquetar:
+
+```powershell
 npm run tauri build
 ```
 
-Los binarios se generarán en `src-tauri/target/release/bundle/`.
-
-## Métricas de rendimiento (objetivo)
-
-- **Memoria en reposo**: <150 MB RAM
-- **Memoria máxima durante reproducción**: <250 MB
-- **Tiempo de arranque**: <2 segundos hasta primera imagen renderizada
-- **Latencia de respuesta a comandos**: <100 ms (play/pause, seek)
-- **Carga de lista de reproducción**: <500 ms para 1000 pistas
+Los instaladores se generan en `src-tauri\target\release\bundle`. Crear un paquete no equivale a certificar su reproducción de YouTube: también hay que probar el origen y la política CSP del paquete instalado.
 
 ## Contribuir
 
-1. Fork el repositorio.
-2. Crea una rama para tu característica (`git checkout -b feature/amazing-feature`).
-3. Realiza tus cambios y confirma (`git commit -m 'Add amazing feature'`).
-4. Push a la rama (`git push origin feature/amazing-feature`).
-5. Abre un Pull Request.
+Abrí un issue con los pasos para reproducir el problema, el modo de ventana, la versión y una captura sin datos personales. Para cambios de código, usá una rama propia y enviá un pull request con las verificaciones realizadas. No incluyas cachés, reportes temporales, credenciales ni archivos de música.
 
-Por favor, asegúrate de seguir las guías de estilo y pasar las pruebas antes de enviar.
+## Licencia y componentes
 
-## Licencia
+El repositorio no incluye actualmente un archivo `LICENSE`; no se declara una licencia de distribución para el proyecto hasta que su titular la establezca.
 
-Este proyecto está licenciado bajo los términos de la licencia MIT. Consulta el archivo [LICENSE](LICENSE) para más detalles.
-
-## Agradecimientos
-
-- [Tauri Team](https://tauri.app) por el excelente framework.
-- [rodio-rs](https://github.com/rodio-rs/rodio) por la reproducción de audio.
-- [lofty](https://github.com/Serial-ATA/lofty-rs) por la lectura de metadata.
-- [sled-db](https://github.com/sled-db/sled) por la base de datos embebida.
-- [yt-dlp](https://github.com/yt-dlp/yt-dlp) por la extracción de audio de YouTube.
-- [Valentine](https://github.com/JesusChapman/valentine) por inspiración de diseño (glassmorphism, neon lyrics, album art blur).
-
----  
-*FlowPlayer – Enfócate en la música, no en la interfaz.*
-
-## Estado actual (sesión 2026-07-16)
-
-QA/QC del informe [`qa-qc-report.md`](./qa-qc-report.md) completado:
-
-- **1.1 Scan async + canal de progreso** — `scan_folder` ahora `async` con `tauri::async_runtime::spawn_blocking` y `Channel<ScanProgress>`; emite progreso cada 25 archivos (`is_multiple_of`).
-- **1.2 reqwest async** — eliminada la feature `blocking`; radio/lyrics usan `bytes_stream()` + `tokio::time::sleep` para reintentos.
-- **2.1 Resiliencia radio + offline** — `useOnlineStatus` (navigator.onLine + listeners `online`/`offline`); `RadioPanel` deshabilita estaciones y muestra banner cuando está offline; reintentos 3x con backoff en `StreamReader`.
-- **2.2 Parseo defensivo lofty** — errores por archivo se registran con `log::warn` y el escaneo continúa con metadatos genéricos.
-- **2.3 Config robusta** — `ConfigStore::load` ahora hace fallback a defaults + reescritura si el JSON está corrupto o el archivo está vacío (con tests).
-- **3.1 Estado global** — migrado de `usePlaylist` (prop drilling) a `usePlayerStore` con dos contexts separados (`usePlayerState` + `usePlayerActions`) para evitar re-renders innecesarios. `App`, `AppLayout`, `PlayerBar` consumen del context, sin prop drilling.
-- **3.2 Caché de carátulas** — `get_cover` ahora persiste en `<app_cache_dir>/covers/<hash>.bin` con `DefaultHasher`.
-
-Verificación final: `tsc --noEmit` 0 errores · `cargo clippy --lib` limpio · `cargo test --lib` 17/17 · `npx vitest run` 130/130.
+Las dependencias conservan sus propias licencias. Entre los componentes utilizados están Tauri, React, rodio, Symphonia, lofty, reqwest y yt-dlp. La interfaz toma referencias de Limusic y Valentine, sin afirmar afiliación con esos proyectos. YouTube es un servicio externo y sus restricciones siguen siendo aplicables.

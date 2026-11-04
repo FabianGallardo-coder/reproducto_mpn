@@ -5,8 +5,7 @@ import type { Track } from "../types";
 
 vi.mock("../lib/api", () => ({
   api: {
-    setWindowDecorations: vi.fn().mockResolvedValue(undefined),
-    getAudioData: vi.fn().mockResolvedValue({ bins: Array(64).fill(0) }),
+    setWindowMode: vi.fn().mockResolvedValue(undefined),
   },
 }));
 
@@ -15,6 +14,20 @@ vi.mock("../components/Visualizer", () => ({
 }));
 
 const track: Track = { path: "/1.mp3", title: "Song", artist: "Artist", album: "A", duration: 180 };
+
+function renderZen(overrides: Partial<React.ComponentProps<typeof ZenView>> = {}) {
+  return render(
+    <ZenView
+      currentTrack={track}
+      playing={false}
+      onExit={vi.fn()}
+      onToggle={vi.fn()}
+      onNext={vi.fn()}
+      onPrevious={vi.fn()}
+      {...overrides}
+    />,
+  );
+}
 
 describe("ZenView", () => {
   beforeEach(() => {
@@ -25,19 +38,19 @@ describe("ZenView", () => {
   });
 
   it("renders track info when track provided", () => {
-    render(<ZenView currentTrack={track} playing={false} onExit={vi.fn()} onToggle={vi.fn()} onNext={vi.fn()} onPrevious={vi.fn()} />);
+    renderZen();
     expect(screen.getByText("Song")).toBeInTheDocument();
     expect(screen.getByText("Artist")).toBeInTheDocument();
   });
 
   it("does not render track info when null", () => {
-    render(<ZenView currentTrack={null} playing={false} onExit={vi.fn()} onToggle={vi.fn()} onNext={vi.fn()} onPrevious={vi.fn()} />);
+    renderZen({ currentTrack: null });
     expect(screen.queryByText("Song")).not.toBeInTheDocument();
   });
 
   it("calls onExit when Escape pressed", () => {
     const onExit = vi.fn();
-    render(<ZenView currentTrack={track} playing={false} onExit={onExit} onToggle={vi.fn()} onNext={vi.fn()} onPrevious={vi.fn()} />);
+    renderZen({ onExit });
     act(() => {
       window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
     });
@@ -46,33 +59,33 @@ describe("ZenView", () => {
 
   it("calls onToggle when play button clicked", () => {
     const onToggle = vi.fn();
-    render(<ZenView currentTrack={track} playing={false} onExit={vi.fn()} onToggle={onToggle} onNext={vi.fn()} onPrevious={vi.fn()} />);
-    screen.getByLabelText("Play").click();
+    renderZen({ onToggle });
+    screen.getByLabelText("Reproducir").click();
     expect(onToggle).toHaveBeenCalledOnce();
   });
 
-  it("shows Pause when playing", () => {
-    render(<ZenView currentTrack={track} playing={true} onExit={vi.fn()} onToggle={vi.fn()} onNext={vi.fn()} onPrevious={vi.fn()} />);
-    expect(screen.getByLabelText("Pause")).toBeInTheDocument();
+  it("shows Pausar when playing", () => {
+    renderZen({ playing: true });
+    expect(screen.getByLabelText("Pausar")).toBeInTheDocument();
   });
 
-  it("shows Play when not playing", () => {
-    render(<ZenView currentTrack={track} playing={false} onExit={vi.fn()} onToggle={vi.fn()} onNext={vi.fn()} onPrevious={vi.fn()} />);
-    expect(screen.getByLabelText("Play")).toBeInTheDocument();
+  it("shows Reproducir when not playing", () => {
+    renderZen();
+    expect(screen.getByLabelText("Reproducir")).toBeInTheDocument();
   });
 
   it("calls onNext and onPrevious", () => {
     const onNext = vi.fn();
     const onPrevious = vi.fn();
-    render(<ZenView currentTrack={track} playing={false} onExit={vi.fn()} onToggle={vi.fn()} onNext={onNext} onPrevious={onPrevious} />);
-    screen.getByLabelText("Next track").click();
-    screen.getByLabelText("Previous track").click();
+    renderZen({ onNext, onPrevious });
+    screen.getByLabelText("Pista siguiente").click();
+    screen.getByLabelText("Pista anterior").click();
     expect(onNext).toHaveBeenCalledOnce();
     expect(onPrevious).toHaveBeenCalledOnce();
   });
 
   it("exit button is accessible", () => {
-    render(<ZenView currentTrack={track} playing={false} onExit={vi.fn()} onToggle={vi.fn()} onNext={vi.fn()} onPrevious={vi.fn()} />);
-    expect(screen.getByLabelText("Exit zen mode")).toBeInTheDocument();
+    renderZen();
+    expect(screen.getByLabelText("Salir del modo zen")).toBeInTheDocument();
   });
 });

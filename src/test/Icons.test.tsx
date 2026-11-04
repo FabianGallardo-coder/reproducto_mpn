@@ -14,6 +14,10 @@ import {
   LibraryIcon,
   VolumeIcon,
   CloseIcon,
+  NormalModeIcon,
+  FlowModeIcon,
+  ZenModeIcon,
+  MiniModeIcon,
 } from "../components/ui/Icons";
 
 const icons = [
@@ -30,6 +34,10 @@ const icons = [
   ["LibraryIcon", LibraryIcon],
   ["VolumeIcon", VolumeIcon],
   ["CloseIcon", CloseIcon],
+  ["NormalModeIcon", NormalModeIcon],
+  ["FlowModeIcon", FlowModeIcon],
+  ["ZenModeIcon", ZenModeIcon],
+  ["MiniModeIcon", MiniModeIcon],
 ] as const;
 
 describe("Icons", () => {

@@ -15,6 +15,11 @@ export function useShortcuts(bindings: KeyBinding[]) {
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
+      if (e.defaultPrevented) return;
+      const target = e.target;
+      if (target instanceof HTMLElement && (target.isContentEditable || target.closest("input, textarea, select"))) return;
+      if (target instanceof HTMLElement && target.closest("button, a, [role='tab'], [role='button'], [role='slider']") &&
+        !e.altKey && !e.ctrlKey && !e.metaKey) return;
       for (const b of bindingsRef.current) {
         const ctrlMatch = b.ctrl ? e.ctrlKey || e.metaKey : !(e.ctrlKey || e.metaKey);
         const altMatch = b.alt ? e.altKey : !e.altKey;

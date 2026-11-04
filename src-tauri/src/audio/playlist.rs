@@ -4,10 +4,14 @@ use serde::{Deserialize, Serialize};
 use crate::audio::track_info::TrackInfo;
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
 pub enum RepeatMode {
+    #[serde(alias = "Off")]
     Off,
     #[default]
+    #[serde(alias = "All")]
     All,
+    #[serde(alias = "One")]
     One,
 }
 
@@ -75,6 +79,9 @@ impl PlaylistManager {
         }
 
         if self.shuffle {
+            if self.shuffle_order.is_empty() {
+                return None;
+            }
             self.shuffle_pos += 1;
             if self.shuffle_pos >= self.shuffle_order.len() {
                 if self.repeat == RepeatMode::All {
@@ -107,10 +114,14 @@ impl PlaylistManager {
         }
 
         if self.shuffle {
-            if self.shuffle_pos > 0 {
-                self.shuffle_pos -= 1;
-                self.index = self.shuffle_order[self.shuffle_pos];
+            if self.shuffle_order.is_empty() {
+                return None;
             }
+            if self.shuffle_pos == 0 {
+                return self.tracks.get(self.index);
+            }
+            self.shuffle_pos -= 1;
+            self.index = self.shuffle_order[self.shuffle_pos];
         } else if self.index == 0 {
             self.index = self.tracks.len() - 1;
         } else {
@@ -193,6 +204,27 @@ mod tests {
         let mut pm = playlist3();
         let t = pm.previous();
         assert_eq!(t.unwrap().title, "c");
+    }
+
+    #[test]
+    fn previous_at_shuffle_start_returns_current_track_and_keeps_playlist_usable() {
+        let mut pm = playlist3();
+        pm.set_shuffle(true);
+
+        let previous = pm.previous();
+
+        assert_eq!(previous.map(|track| track.title.as_str()), Some("a"));
+        assert_eq!(pm.current().map(|track| track.title.as_str()), Some("a"));
+        assert_eq!(pm.current_index(), 0);
+        assert_eq!(pm.tracks().len(), 3);
+
+        let next_title = pm.next().map(|track| track.title.clone());
+        assert!(next_title.is_some());
+        assert_eq!(pm.tracks().len(), 3);
+        assert!(pm
+            .tracks()
+            .iter()
+            .any(|track| { Some(track.title.as_str()) == next_title.as_deref() }));
     }
 
     #[test]

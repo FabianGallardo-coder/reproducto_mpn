@@ -19,7 +19,7 @@ export class ErrorBoundary extends Component<Props, State> {
     if (this.state.error) {
       return (
         <div className="error-boundary">
-          <p>Something went wrong.</p>
+          <p role="alert" aria-live="assertive">Something went wrong.</p>
           <button
             className="error-boundary__btn"
             onClick={() => this.setState({ error: null })}

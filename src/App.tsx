@@ -1,47 +1,56 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
-import { getCurrentWindow } from "@tauri-apps/api/window";
+import { listen } from "@tauri-apps/api/event";
 import { api } from "./lib/api";
 import { usePlayerStore } from "./hooks/usePlayerStore";
 import { useMode } from "./hooks/useMode";
+import { useNavigation } from "./hooks/useNavigation";
+import { useRecordPlays } from "./hooks/useRecordPlays";
+import { useAccentColor } from "./hooks/useAccentColor";
+import { shortcutsText } from "./lib/shortcuts";
 import { useShortcuts } from "./hooks/useShortcuts";
 import { useMediaSession } from "./hooks/useMediaSession";
 import { useCoverArt } from "./lib/useCoverArt";
 import { AppLayout } from "./components/layout/AppLayout";
 import { ErrorBoundary } from "./components/ErrorBoundary";
-import { NormalView } from "./components/modes/normal/NormalView";
+import { PageRouter } from "./pages/PageRouter";
 import { FlowView } from "./components/modes/flow/FlowView";
 import { ZenView } from "./components/modes/zen/ZenView";
 import { MiniView } from "./components/modes/mini/MiniView";
 
 function App() {
   const player = usePlayerStore();
-  const { mode, setMode, cycleMode } = useMode();
+  const { mode, setMode } = useMode();
+  const { navigate } = useNavigation();
+  useRecordPlays();
+  useAccentColor();
   const [musicFolder, setMusicFolder] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
   const bgCoverUrl = useCoverArt(player.currentTrack?.path);
 
   useEffect(() => {
-    getCurrentWindow().show();
     api.getConfig().then((c) => {
       setMusicFolder(c.music_folder);
-      api.setVolume(c.volume);
+      player.setVolume(c.volume);
       player.setShuffle(c.shuffle);
       player.setRepeat(c.repeat ?? "off");
       player.loadLibrary(c.music_folder);
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const filteredTracks = useMemo(() => {
-    if (!searchQuery.trim()) return player.tracks;
-    const q = searchQuery.toLowerCase();
-    return player.tracks.filter(
-      (t) =>
-        t.title.toLowerCase().includes(q) ||
-        t.artist.toLowerCase().includes(q) ||
-        t.album.toLowerCase().includes(q),
-    );
-  }, [player.tracks, searchQuery]);
+  useEffect(() => {
+    api.setWindowMode(mode).catch((err) => {
+      console.error("Failed to apply window mode:", err);
+    });
+  }, [mode]);
+
+  useEffect(() => {
+    const unlisten = listen("tray-show", () => {
+      setMode((current) => (current === "zen" ? "normal" : current));
+    });
+    return () => {
+      unlisten.then((fn) => fn());
+    };
+  }, [setMode]);
 
   const handleSelectFolder = useCallback(async () => {
     try {
@@ -58,14 +67,50 @@ function App() {
           repeat: player.repeat,
           last_track_index: null,
           last_position: 0,
+          favorites: player.favorites ?? [],
+          custom_playlists: player.customPlaylists ?? [],
+          custom_radio_stations: player.customRadioStations ?? [],
         });
       }
     } catch (error) {
-      // Handle error - could show a toast or set error state
       console.error("Failed to select folder:", error);
-      // Optionally set an error state in the playlist hook if needed
+      window.alert(`No se pudo abrir la carpeta de música:\n${String(error)}`);
     }
   }, [player.volume, player.shuffle, player.repeat, player.loadLibrary]);
+
+  const handleOpenFile = useCallback(async () => {
+    try {
+      const selected = await open({
+        multiple: false,
+        filters: [{ name: "Audio", extensions: ["mp3", "wav", "flac", "ogg", "m4a", "aac", "opus"] }],
+      });
+      if (typeof selected === "string") {
+        await player.playExternalFile(selected);
+      }
+    } catch (error) {
+      console.error("Failed to open file:", error);
+    }
+  }, [player.playExternalFile]);
+
+  const showAbout = useCallback(() => {
+    window.alert(`FlowPlayer v0.1.0\nUn reproductor de música de escritorio construido con Tauri v2, Rust y React.`);
+  }, []);
+
+  const showShortcuts = useCallback(() => {
+    window.alert(shortcutsText());
+  }, []);
+
+  useEffect(() => {
+    const unlisteners = [
+      listen("menu-open-folder", handleSelectFolder),
+      listen("menu-open-file", handleOpenFile),
+      listen("menu-about", showAbout),
+      listen("menu-shortcuts", showShortcuts),
+    ];
+    return () => {
+      unlisteners.forEach((u) => u.then((fn) => fn()));
+    };
+  }, [handleSelectFolder, handleOpenFile, showAbout, showShortcuts]);
 
   useShortcuts([
     { key: "Space", action: player.toggle, description: "Play/Pause" },
@@ -93,7 +138,6 @@ function App() {
       action: () => setMode("mini"),
       description: "Mini mode",
     },
-    { key: "Tab", action: cycleMode, description: "Cycle modes" },
     {
       key: "ArrowRight",
       ctrl: true,
@@ -121,6 +165,8 @@ function App() {
       description: "Volume down",
     },
     { key: "KeyO", ctrl: true, action: handleSelectFolder, description: "Open folder" },
+    { key: "KeyO", ctrl: true, shift: true, action: handleOpenFile, description: "Open file" },
+    { key: "KeyK", ctrl: true, action: () => { setMode("normal"); navigate("buscar"); }, description: "Search" },
     { key: "KeyS", action: player.toggleShuffle, description: "Toggle shuffle" },
     { key: "KeyR", action: player.cycleRepeat, description: "Cycle repeat" },
   ]);
@@ -143,12 +189,23 @@ function App() {
     mediaActions,
   );
 
+  const libraryControls = useMemo(
+    () => ({
+      musicFolder,
+      onSelectFolder: handleSelectFolder,
+      onOpenFile: handleOpenFile,
+      onShowShortcuts: showShortcuts,
+      onShowAbout: showAbout,
+    }),
+    [musicFolder, handleSelectFolder, handleOpenFile, showShortcuts, showAbout],
+  );
+
   const content = (() => {
     switch (mode) {
       case "flow":
         return (
           <FlowView
-            tracks={filteredTracks}
+            tracks={player.tracks}
             currentTrack={player.currentTrack}
             playing={player.playing}
             position={player.positionValue}
@@ -182,35 +239,20 @@ function App() {
           />
         );
       default:
-        return (
-          <NormalView
-            tracks={filteredTracks}
-            currentTrack={player.currentTrack}
-            onSelect={player.playTrack}
-            loading={player.loading}
-            scanProgress={player.scanProgress}
-          />
-        );
+        return <PageRouter controls={libraryControls} />;
     }
   })();
 
   return (
     <>
-      <div className="app-bg">
-        {bgCoverUrl && <img src={bgCoverUrl} alt="" className="app-bg__img" />}
-      </div>
-      <AppLayout
-      mode={mode}
-      onModeChange={setMode}
-      onSearch={setSearchQuery}
-    >
-      {mode !== "zen" && mode !== "mini" && (
-        <button className="app__folder-btn" onClick={handleSelectFolder}>
-          {musicFolder || "Select music folder"}
-        </button>
+      {mode !== "mini" && (
+        <div className="app-bg">
+          {bgCoverUrl && <img src={bgCoverUrl} alt="" className="app-bg__img" />}
+        </div>
       )}
-      <ErrorBoundary>{content}</ErrorBoundary>
-    </AppLayout>
+      <AppLayout mode={mode} onModeChange={setMode}>
+        <ErrorBoundary>{content}</ErrorBoundary>
+      </AppLayout>
     </>
   );
 }

@@ -50,7 +50,7 @@ export function FlowView({ tracks, currentTrack, playing, position, onSelect, lo
           ) : (
             <div className="flow-view__np-empty">
               <MusicIcon size={32} />
-              <span>No track</span>
+              <span>Nada en reproducción</span>
             </div>
           )}
         </div>

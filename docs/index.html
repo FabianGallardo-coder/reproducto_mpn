@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="FlowPlayer: biblioteca local, YouTube y radio en un reproductor de escritorio con cuatro modos. Guías de uso y desarrollo.">
+    <meta name="theme-color" content="#131117">
+    <title>FlowPlayer — Música a tu ritmo</title>
+    <link rel="icon" type="image/svg+xml" href="./assets/icon.svg">
+    <link rel="stylesheet" href="./site.css">
+  </head>
+  <body>
+    <a class="skip" href="#contenido">Saltar al contenido</a>
+    <header class="site-header wrap">
+      <a class="brand" href="./" aria-label="FlowPlayer, inicio">
+        <img src="./assets/icon.svg" width="36" height="36" alt="">
+        <span>FlowPlayer</span>
+      </a>
+      <nav aria-label="Navegación">
+        <a href="#modos">Modos</a>
+        <a href="#empezar">Empezar</a>
+        <a href="#guias">Guías</a>
+        <a href="https://github.com/FabianGallardo-coder/reproducto_mpn">GitHub <span aria-hidden="true">↗</span></a>
+      </nav>
+    </header>
+    <main>
+      <section class="hero wrap" aria-labelledby="contenido">
+        <div>
+          <p class="eyebrow">Música local · YouTube · Radio</p>
+          <h1 id="contenido" tabindex="-1">Tu música.<br>Tu espacio.</h1>
+          <p class="lead">Una biblioteca para escuchar, descubrir y concentrarte. Cuatro modos de escritorio, sin perder el control de lo que suena.</p>
+          <div class="actions">
+            <a class="button" href="#empezar">Empezar con FlowPlayer <span aria-hidden="true">→</span></a>
+            <a class="button secondary" href="#guias">Leer las guías</a>
+          </div>
+          <p class="note">Tauri 2 + Rust + React. Validación nativa actual en Windows.</p>
+        </div>
+        <img class="hero-icon" src="./assets/icon.svg" width="280" height="280" alt="Símbolo violeta de sonido y reproducción">
+      </section>
+
+      <figure class="app-preview wrap">
+        <img src="./assets/library.png" width="1024" height="768" fetchpriority="high" alt="Biblioteca de FlowPlayer: navegación lateral, pistas de prueba y barra de reproducción">
+        <figcaption>La biblioteca y los controles, siempre a mano. Captura de una sesión con archivos de prueba.</figcaption>
+      </figure>
+
+      <section class="section wrap" id="modos" aria-labelledby="modos-title">
+        <p class="eyebrow">Una app, cuatro formas de escuchar</p>
+        <h2 id="modos-title">Elegí cómo querés estar.</h2>
+        <div class="cards">
+          <article class="card">
+            <span class="number" aria-hidden="true">01</span>
+            <h3>Normal</h3>
+            <p>Biblioteca, búsquedas, favoritos e historial. Todo en su lugar, con un reproductor persistente.</p>
+          </article>
+          <article class="card">
+            <span class="number" aria-hidden="true">02</span>
+            <h3>Flow</h3>
+            <p>Pomodoro, visualizador y letras para acompañar el trabajo. Abrí cualquier sección lateral para volver a Normal.</p>
+          </article>
+          <article class="card">
+            <span class="number" aria-hidden="true">03</span>
+            <h3>Zen</h3>
+            <p>Menos interfaz, más música. Visualizador y controles esenciales; Escape te devuelve a Normal.</p>
+          </article>
+          <article class="card">
+            <span class="number" aria-hidden="true">04</span>
+            <h3>Mini</h3>
+            <p>Una tarjeta compacta y opaca para tener pausa, avance y progreso cerca, sin ocupar toda la pantalla.</p>
+          </article>
+        </div>
+        <div class="mode-previews">
+          <figure>
+            <img src="./assets/flow.png" width="1024" height="768" loading="lazy" alt="Modo Flow con temporizador Pomodoro, visualizador y lista de pistas">
+            <figcaption>Flow</figcaption>
+          </figure>
+          <figure class="mini-preview">
+            <img src="./assets/mini.png" width="320" height="200" loading="lazy" alt="Modo Mini: título de la pista, controles y progreso en una tarjeta oscura">
+            <figcaption>Mini</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section class="section wrap sources" aria-labelledby="sources-title">
+        <div>
+          <p class="eyebrow">Tus fuentes, juntas</p>
+          <h2 id="sources-title">De tu carpeta<br>a la próxima canción.</h2>
+        </div>
+        <div class="source-list">
+          <article><h3>Biblioteca local</h3><p>Explorá tus archivos, guardá favoritos y reproducí colecciones sin mover tu música.</p></article>
+          <article><h3>YouTube visible</h3><p>Reproductor oficial flotante o acoplado, cola y autoplay. Zen y Mini pausan el video; no se reproduce oculto.</p></article>
+          <article><h3>Radio en línea</h3><p>Emisoras disponibles y tus propias URLs de streaming. La conexión y disponibilidad dependen del proveedor.</p></article>
+        </div>
+      </section>
+
+      <section class="section wrap" id="empezar" aria-labelledby="empezar-title">
+        <p class="eyebrow">Primeros pasos</p>
+        <h2 id="empezar-title">Abrí la app. Elegí tu carpeta.</h2>
+        <p class="section-intro">Para desarrollar en Windows necesitás Node.js 22+, Rust estable MSVC, las herramientas de C++ con Windows SDK y WebView2. La primera compilación puede tardar varios minutos.</p>
+        <pre aria-label="Comandos PowerShell para iniciar FlowPlayer"><code>git clone https://github.com/FabianGallardo-coder/reproducto_mpn.git
+Set-Location reproducto_mpn
+npm ci
+npm run tauri dev</code></pre>
+        <p>Después, seleccioná tu carpeta en <strong>Configuración</strong> y reproducí una pista desde <strong>Biblioteca</strong>.</p>
+        <aside class="notice" aria-label="Acerca de este sitio">
+          Este sitio presenta la app y su documentación. No es un reproductor web: FlowPlayer necesita el backend de Tauri. YouTube, radio y letras requieren conexión; la música local no.
+        </aside>
+      </section>
+
+      <section class="section wrap" id="guias" aria-labelledby="guias-title">
+        <p class="eyebrow">Documentación</p>
+        <h2 id="guias-title">Una guía para cada paso.</h2>
+        <p class="section-intro">Las guías se mantienen con el código en GitHub. Incluyen uso, datos, arquitectura y los límites de las pruebas.</p>
+        <div class="guide-grid">
+          <a class="guide" href="https://github.com/FabianGallardo-coder/reproducto_mpn/blob/main/docs/wiki/Primeros-pasos.md"><h3>Primeros pasos</h3><p>Requisitos y primera reproducción.</p></a>
+          <a class="guide" href="https://github.com/FabianGallardo-coder/reproducto_mpn/blob/main/docs/wiki/Biblioteca-y-playlists.md"><h3>Biblioteca y playlists</h3><p>Archivos, favoritos y colecciones.</p></a>
+          <a class="guide" href="https://github.com/FabianGallardo-coder/reproducto_mpn/blob/main/docs/wiki/YouTube-y-radio.md"><h3>YouTube y radio</h3><p>Video, descargas y emisoras.</p></a>
+          <a class="guide" href="https://github.com/FabianGallardo-coder/reproducto_mpn/blob/main/docs/wiki/Modos-y-atajos.md"><h3>Modos y atajos</h3><p>Flow, Zen, Mini y teclado.</p></a>
+          <a class="guide" href="https://github.com/FabianGallardo-coder/reproducto_mpn/blob/main/docs/wiki/Configuracion-y-datos.md"><h3>Configuración y datos</h3><p>Preferencias, historial y respaldos.</p></a>
+          <a class="guide" href="https://github.com/FabianGallardo-coder/reproducto_mpn/blob/main/docs/wiki/Desarrollo.md"><h3>Desarrollo</h3><p>Arquitectura, IPC e iconos.</p></a>
+          <a class="guide" href="https://github.com/FabianGallardo-coder/reproducto_mpn/blob/main/docs/wiki/QA.md"><h3>Pruebas y QA</h3><p>Simulación, Tauri real y controles manuales.</p></a>
+          <a class="guide" href="https://github.com/FabianGallardo-coder/reproducto_mpn/blob/main/docs/wiki/Solucion-de-problemas.md"><h3>Solución de problemas</h3><p>Audio, archivos e integraciones.</p></a>
+          <a class="guide" href="https://github.com/FabianGallardo-coder/reproducto_mpn/blob/main/docs/wiki/Publicacion.md"><h3>Publicación</h3><p>Wiki y despliegue de este sitio.</p></a>
+        </div>
+      </section>
+
+      <section class="section wrap faq" aria-labelledby="faq-title">
+        <h2 id="faq-title">Antes de empezar</h2>
+        <details><summary>¿Reproducir YouTube descarga el audio?</summary><p>No. La reproducción usa el iframe oficial visible. Las descargas son una acción separada, con confirmación, para material propio o autorizado.</p></details>
+        <details><summary>¿Funciona en macOS o Linux?</summary><p>La base tecnológica es multiplataforma, pero la validación nativa actual se realizó en Windows. No se presentan los otros sistemas como certificados.</p></details>
+        <details><summary>¿Las pruebas garantizan todas las funciones?</summary><p>No. Se distinguen pruebas simuladas y nativas. Audibilidad, diálogos, controles del sistema e instalador necesitan comprobaciones manuales.</p></details>
+        <details><summary>¿Qué licencia tiene el proyecto?</summary><p>El repositorio no incluye actualmente un archivo LICENSE. El titular debe establecer la licencia antes de distribuir. Cada dependencia conserva sus propios términos.</p></details>
+      </section>
+    </main>
+    <footer class="wrap site-footer">
+      <a class="brand" href="./"><img src="./assets/icon.svg" width="28" height="28" alt="">FlowPlayer</a>
+      <p>Hecho para escuchar a tu manera.</p>
+      <a href="https://github.com/FabianGallardo-coder/reproducto_mpn/issues">Informar un problema</a>
+    </footer>
+  </body>
+</html>

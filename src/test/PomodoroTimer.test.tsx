@@ -10,19 +10,22 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
+function start() {
+  act(() => {
+    screen.getByText("Iniciar").click();
+  });
+}
+
 describe("PomodoroTimer", () => {
   it("renders 25:00 initially", () => {
     render(<PomodoroTimer />);
     expect(screen.getByText("25:00")).toBeInTheDocument();
-    expect(screen.getByText("Work")).toBeInTheDocument();
+    expect(screen.getByText("Enfoque")).toBeInTheDocument();
   });
 
   it("starts counting down", () => {
     render(<PomodoroTimer />);
-
-    act(() => {
-      screen.getByText("Start").click();
-    });
+    start();
 
     act(() => {
       vi.advanceTimersByTime(3000);
@@ -31,19 +34,16 @@ describe("PomodoroTimer", () => {
     expect(screen.getByText("24:57")).toBeInTheDocument();
   });
 
-  it("pauses when clicking Pause", () => {
+  it("pauses when clicking Pausar", () => {
     render(<PomodoroTimer />);
-
-    act(() => {
-      screen.getByText("Start").click();
-    });
+    start();
 
     act(() => {
       vi.advanceTimersByTime(2000);
     });
 
     act(() => {
-      screen.getByText("Pause").click();
+      screen.getByText("Pausar").click();
     });
 
     act(() => {
@@ -55,30 +55,24 @@ describe("PomodoroTimer", () => {
 
   it("resets to 25:00", () => {
     render(<PomodoroTimer />);
-
-    act(() => {
-      screen.getByText("Start").click();
-    });
+    start();
 
     act(() => {
       vi.advanceTimersByTime(10000);
     });
 
     act(() => {
-      screen.getByText("Reset").click();
+      screen.getByText("Reiniciar").click();
     });
 
     expect(screen.getByText("25:00")).toBeInTheDocument();
-    expect(screen.getByText("Work")).toBeInTheDocument();
+    expect(screen.getByText("Enfoque")).toBeInTheDocument();
   });
 
   it("transitions to break after work completes", () => {
     const onComplete = vi.fn();
     render(<PomodoroTimer onComplete={onComplete} />);
-
-    act(() => {
-      screen.getByText("Start").click();
-    });
+    start();
 
     act(() => {
       vi.advanceTimersByTime(25 * 60 * 1000);
@@ -86,6 +80,6 @@ describe("PomodoroTimer", () => {
 
     expect(onComplete).toHaveBeenCalledOnce();
     expect(screen.getByText("05:00")).toBeInTheDocument();
-    expect(screen.getByText("Break")).toBeInTheDocument();
+    expect(screen.getByText("Descanso")).toBeInTheDocument();
   });
 });

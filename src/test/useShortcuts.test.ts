@@ -63,4 +63,19 @@ describe("useShortcuts", () => {
     act(() => fireKey("KeyN", { shiftKey: true }));
     expect(action).toHaveBeenCalledOnce();
   });
+
+  it.each(["input", "button", "select", "textarea", "a"])(
+    "does not steal Space from a focused %s",
+    (tag) => {
+      const action = vi.fn();
+      renderHook(() => useShortcuts([{ key: "Space", action, description: "toggle" }]));
+      const control = document.createElement(tag);
+      document.body.appendChild(control);
+      const event = new KeyboardEvent("keydown", { code: "Space", bubbles: true, cancelable: true });
+      act(() => { control.dispatchEvent(event); });
+      expect(action).not.toHaveBeenCalled();
+      expect(event.defaultPrevented).toBe(false);
+      control.remove();
+    },
+  );
 });

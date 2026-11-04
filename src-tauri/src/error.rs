@@ -19,6 +19,9 @@ pub enum AppError {
 
     #[error("Walkdir error: {0}")]
     Walkdir(#[from] walkdir::Error),
+
+    #[error("Integration error: {0}")]
+    Integration(String),
 }
 
 impl Serialize for AppError {

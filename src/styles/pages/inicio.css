@@ -1,0 +1,46 @@
+.home__shortcuts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--sp-3);
+}
+
+.home__shortcut {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 64px;
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+
+.home__shortcut:hover {
+  border-color: rgba(var(--accent-rgb), 0.45);
+  background: var(--accent-soft);
+}
+
+.home__shortcut-title { font-size: var(--fs-base); font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.home__shortcut-detail { color: var(--text-secondary); font-size: var(--fs-xs); }
+
+.home__scroller {
+  display: flex;
+  gap: var(--sp-2);
+  padding-bottom: var(--sp-2);
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+}
+
+.home__scroller > * { flex: none; scroll-snap-align: start; }
+
+.home__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  column-gap: var(--sp-4);
+  list-style: none;
+}

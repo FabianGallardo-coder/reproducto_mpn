@@ -1,8 +1,9 @@
 import { useState, useCallback } from "react";
 import type { Mode } from "../types";
+import { readStartMode } from "../lib/startMode";
 
 export function useMode() {
-  const [mode, setMode] = useState<Mode>("normal");
+  const [mode, setMode] = useState<Mode>(readStartMode);
 
   const cycleMode = useCallback(() => {
     setMode((prev) => {

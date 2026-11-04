@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState, useCallback } from "react";
-import { listen } from "@tauri-apps/api/event";
+import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 
 interface Props {
   playing: boolean;
@@ -46,19 +46,27 @@ export function Visualizer({ playing }: Props) {
     playingRef.current = playing;
   }, [playing]);
 
-  // Listen to the Tauri event for incoming audio data
+  // Listen to the Tauri event for incoming audio data.
+  // ponytail: synchronous-ref pattern avoids the StrictMode double-mount race
+  // where a stale .then(unsub => unsub()) from the first effect desubscribes
+  // the listener of the second mount.
   useEffect(() => {
     let active = true;
-    const unsubPromise = listen("audio-data", (event) => {
+    let unlisten: UnlistenFn | null = null;
+
+    listen<{ bins: number[] }>("audio-data", (event) => {
+      if (active) audioDataRef.current = event.payload;
+    }).then((u) => {
       if (active) {
-        // @ts-ignore
-        audioDataRef.current = event.payload;
+        unlisten = u;
+      } else {
+        u();
       }
     });
 
     return () => {
       active = false;
-      unsubPromise.then((unsub) => unsub());
+      if (unlisten) unlisten();
     };
   }, []);
 
@@ -68,7 +76,9 @@ export function Visualizer({ playing }: Props) {
       const next = MODE_LIST[(idx + 1) % MODE_LIST.length];
       try {
         localStorage.setItem("flowplayer-vis-mode", next);
-      } catch (e) {}
+      } catch {
+        // Persisting the preference is optional (storage can be unavailable).
+      }
 
       // Show temporary text indicator
       setModeIndicator({ text: MODE_LABELS[next], visible: true });
@@ -88,17 +98,23 @@ export function Visualizer({ playing }: Props) {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Resize Observer for pixel ratio scaling
-    const ro = new ResizeObserver(([entry]) => {
+    // Size the pixel buffer from the container. The canvas is absolutely
+    // positioned, so its own size never feeds back into the layout.
+    const container = canvas.parentElement ?? canvas;
+    const resize = (width: number, height: number) => {
+      if (width <= 0 || height <= 0) return;
       const dpr = window.devicePixelRatio || 1;
-      const { width, height } = entry.contentRect;
       canvas.width = Math.round(width * dpr);
       canvas.height = Math.round(height * dpr);
-      ctx.scale(dpr, dpr);
-      canvas.style.width = width + "px";
-      canvas.style.height = height + "px";
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    };
+    const ro = new ResizeObserver(([entry]) => {
+      resize(entry.contentRect.width, entry.contentRect.height);
     });
-    ro.observe(canvas);
+    ro.observe(container);
+
+    const rect = container.getBoundingClientRect();
+    resize(rect.width, rect.height);
 
     let cancelled = false;
 
@@ -138,6 +154,7 @@ export function Visualizer({ playing }: Props) {
         // Modern Capsule Bars
         const gap = 2;
         const barWidth = (w - gap * (NUM_BINS - 1)) / NUM_BINS;
+        if (barWidth <= 0) { frameRef.current = requestAnimationFrame(draw); return; }
         const radius = barWidth / 2;
 
         ctx.globalCompositeOperation = "lighter";
@@ -329,7 +346,7 @@ export function Visualizer({ playing }: Props) {
       <canvas
         ref={canvasRef}
         className="visualizer"
-        style={{ width: "100%", height: "100%", display: "block", cursor: "pointer" }}
+        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", display: "block", cursor: "pointer" }}
         onClick={cycleMode}
         title="Click to change visualizer mode"
       />

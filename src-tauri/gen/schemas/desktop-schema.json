@@ -387,6 +387,126 @@
       "description": "Permission identifier",
       "oneOf": [
         {
+          "type": "string",
+          "const": "allow-clear-history"
+        },
+        {
+          "type": "string",
+          "const": "allow-fetch-lyrics"
+        },
+        {
+          "type": "string",
+          "const": "allow-get-config"
+        },
+        {
+          "type": "string",
+          "const": "allow-get-cover"
+        },
+        {
+          "type": "string",
+          "const": "allow-get-history"
+        },
+        {
+          "type": "string",
+          "const": "allow-get-state"
+        },
+        {
+          "type": "string",
+          "const": "allow-get-track-info"
+        },
+        {
+          "type": "string",
+          "const": "allow-list-radio-stations"
+        },
+        {
+          "type": "string",
+          "const": "allow-next"
+        },
+        {
+          "type": "string",
+          "const": "allow-pause"
+        },
+        {
+          "type": "string",
+          "const": "allow-play-url"
+        },
+        {
+          "type": "string",
+          "const": "allow-previous"
+        },
+        {
+          "type": "string",
+          "const": "allow-record-play"
+        },
+        {
+          "type": "string",
+          "const": "allow-resume"
+        },
+        {
+          "type": "string",
+          "const": "allow-scan-folder"
+        },
+        {
+          "type": "string",
+          "const": "allow-search"
+        },
+        {
+          "type": "string",
+          "const": "allow-seek"
+        },
+        {
+          "type": "string",
+          "const": "allow-set-config"
+        },
+        {
+          "type": "string",
+          "const": "allow-set-playlist"
+        },
+        {
+          "type": "string",
+          "const": "allow-set-repeat"
+        },
+        {
+          "type": "string",
+          "const": "allow-set-shuffle"
+        },
+        {
+          "type": "string",
+          "const": "allow-set-volume"
+        },
+        {
+          "type": "string",
+          "const": "allow-set-window-mode"
+        },
+        {
+          "type": "string",
+          "const": "allow-update-smtc-metadata"
+        },
+        {
+          "type": "string",
+          "const": "allow-youtube-cancel"
+        },
+        {
+          "type": "string",
+          "const": "allow-youtube-enqueue"
+        },
+        {
+          "type": "string",
+          "const": "allow-youtube-inspect"
+        },
+        {
+          "type": "string",
+          "const": "allow-youtube-library"
+        },
+        {
+          "type": "string",
+          "const": "allow-youtube-retry"
+        },
+        {
+          "type": "string",
+          "const": "allow-youtube-search"
+        },
+        {
           "description": "Default core plugins set.\n#### This default permission set includes:\n\n- `core:path:default`\n- `core:event:default`\n- `core:window:default`\n- `core:webview:default`\n- `core:app:default`\n- `core:image:default`\n- `core:resources:default`\n- `core:menu:default`\n- `core:tray:default`",
           "type": "string",
           "const": "core:default",
@@ -2467,6 +2587,72 @@
           "type": "string",
           "const": "dialog:deny-save",
           "markdownDescription": "Denies the save command without any pre-configured scope."
+        },
+        {
+          "description": "No features are enabled by default, as we believe\nthe shortcuts can be inherently dangerous and it is\napplication specific if specific shortcuts should be\nregistered or unregistered.\n",
+          "type": "string",
+          "const": "global-shortcut:default",
+          "markdownDescription": "No features are enabled by default, as we believe\nthe shortcuts can be inherently dangerous and it is\napplication specific if specific shortcuts should be\nregistered or unregistered.\n"
+        },
+        {
+          "description": "Enables the is_registered command without any pre-configured scope.",
+          "type": "string",
+          "const": "global-shortcut:allow-is-registered",
+          "markdownDescription": "Enables the is_registered command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the register command without any pre-configured scope.",
+          "type": "string",
+          "const": "global-shortcut:allow-register",
+          "markdownDescription": "Enables the register command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the register_all command without any pre-configured scope.",
+          "type": "string",
+          "const": "global-shortcut:allow-register-all",
+          "markdownDescription": "Enables the register_all command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the unregister command without any pre-configured scope.",
+          "type": "string",
+          "const": "global-shortcut:allow-unregister",
+          "markdownDescription": "Enables the unregister command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the unregister_all command without any pre-configured scope.",
+          "type": "string",
+          "const": "global-shortcut:allow-unregister-all",
+          "markdownDescription": "Enables the unregister_all command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the is_registered command without any pre-configured scope.",
+          "type": "string",
+          "const": "global-shortcut:deny-is-registered",
+          "markdownDescription": "Denies the is_registered command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the register command without any pre-configured scope.",
+          "type": "string",
+          "const": "global-shortcut:deny-register",
+          "markdownDescription": "Denies the register command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the register_all command without any pre-configured scope.",
+          "type": "string",
+          "const": "global-shortcut:deny-register-all",
+          "markdownDescription": "Denies the register_all command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the unregister command without any pre-configured scope.",
+          "type": "string",
+          "const": "global-shortcut:deny-unregister",
+          "markdownDescription": "Denies the unregister command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the unregister_all command without any pre-configured scope.",
+          "type": "string",
+          "const": "global-shortcut:deny-unregister-all",
+          "markdownDescription": "Denies the unregister_all command without any pre-configured scope."
         },
         {
           "description": "This permission set configures which\nshell functionality is exposed by default.\n\n#### Granted Permissions\n\nIt allows to use the `open` functionality with a reasonable\nscope pre-configured. It will allow opening `http(s)://`,\n`tel:` and `mailto:` links.\n\n#### This default permission set includes:\n\n- `allow-open`",

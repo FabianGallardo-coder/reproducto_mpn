@@ -1,0 +1,154 @@
+identifier = "flowplayer:default"
+description = "FlowPlayer custom commands"
+permissions = [
+  "allow-pause",
+  "allow-resume",
+  "allow-seek",
+  "allow-next",
+  "allow-previous",
+  "allow-set-volume",
+  "allow-get-state",
+  "allow-set-playlist",
+  "allow-set-shuffle",
+  "allow-set-repeat",
+  "allow-search",
+  "allow-play-url",
+  "allow-list-radio-stations",
+  "allow-update-smtc-metadata",
+  "allow-youtube-library",
+  "allow-youtube-search",
+  "allow-youtube-inspect",
+  "allow-youtube-enqueue",
+  "allow-youtube-cancel",
+  "allow-youtube-retry",
+  "allow-fetch-lyrics",
+  "allow-scan-folder",
+  "allow-get-cover",
+  "allow-get-track-info",
+  "allow-get-config",
+  "allow-set-config",
+  "allow-set-window-mode",
+  "allow-record-play",
+  "allow-get-history",
+  "allow-clear-history"
+]
+
+[[permission]]
+identifier = "allow-pause"
+commands.allow = ["pause"]
+
+[[permission]]
+identifier = "allow-resume"
+commands.allow = ["resume"]
+
+[[permission]]
+identifier = "allow-seek"
+commands.allow = ["seek"]
+
+[[permission]]
+identifier = "allow-next"
+commands.allow = ["next"]
+
+[[permission]]
+identifier = "allow-previous"
+commands.allow = ["previous"]
+
+[[permission]]
+identifier = "allow-set-volume"
+commands.allow = ["set_volume"]
+
+[[permission]]
+identifier = "allow-get-state"
+commands.allow = ["get_state"]
+
+[[permission]]
+identifier = "allow-set-playlist"
+commands.allow = ["set_playlist"]
+
+[[permission]]
+identifier = "allow-set-shuffle"
+commands.allow = ["set_shuffle"]
+
+[[permission]]
+identifier = "allow-set-repeat"
+commands.allow = ["set_repeat"]
+
+[[permission]]
+identifier = "allow-search"
+commands.allow = ["search"]
+
+[[permission]]
+identifier = "allow-play-url"
+commands.allow = ["play_url"]
+
+[[permission]]
+identifier = "allow-list-radio-stations"
+commands.allow = ["list_radio_stations"]
+
+[[permission]]
+identifier = "allow-update-smtc-metadata"
+commands.allow = ["update_smtc_metadata"]
+
+[[permission]]
+identifier = "allow-youtube-library"
+commands.allow = ["youtube_library"]
+
+[[permission]]
+identifier = "allow-youtube-search"
+commands.allow = ["youtube_search"]
+
+[[permission]]
+identifier = "allow-youtube-inspect"
+commands.allow = ["youtube_inspect"]
+
+[[permission]]
+identifier = "allow-youtube-enqueue"
+commands.allow = ["youtube_enqueue"]
+
+[[permission]]
+identifier = "allow-youtube-cancel"
+commands.allow = ["youtube_cancel"]
+
+[[permission]]
+identifier = "allow-youtube-retry"
+commands.allow = ["youtube_retry"]
+
+[[permission]]
+identifier = "allow-fetch-lyrics"
+commands.allow = ["fetch_lyrics"]
+
+[[permission]]
+identifier = "allow-scan-folder"
+commands.allow = ["scan_folder"]
+
+[[permission]]
+identifier = "allow-get-cover"
+commands.allow = ["get_cover"]
+
+[[permission]]
+identifier = "allow-get-track-info"
+commands.allow = ["get_track_info"]
+
+[[permission]]
+identifier = "allow-get-config"
+commands.allow = ["get_config"]
+
+[[permission]]
+identifier = "allow-set-config"
+commands.allow = ["set_config"]
+
+[[permission]]
+identifier = "allow-set-window-mode"
+commands.allow = ["set_window_mode"]
+
+[[permission]]
+identifier = "allow-record-play"
+commands.allow = ["record_play"]
+
+[[permission]]
+identifier = "allow-get-history"
+commands.allow = ["get_history"]
+
+[[permission]]
+identifier = "allow-clear-history"
+commands.allow = ["clear_history"]

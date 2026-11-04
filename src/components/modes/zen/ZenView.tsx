@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Visualizer } from "../../Visualizer";
 import { CloseIcon, PlayIcon, PauseIcon, PrevIcon, NextIcon } from "../../ui/Icons";
-import { api } from "../../../lib/api";
 import type { Track } from "../../../types";
 
 interface Props {
@@ -21,13 +20,6 @@ export function ZenView({ currentTrack, playing, onExit, onToggle, onNext, onPre
     setShowControls(true);
     if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
     hideTimerRef.current = setTimeout(() => setShowControls(false), 3000);
-  }, []);
-
-  useEffect(() => {
-    api.setWindowDecorations(false).catch(() => {});
-    return () => {
-      api.setWindowDecorations(true).catch(() => {});
-    };
   }, []);
 
   useEffect(() => {
@@ -58,7 +50,7 @@ export function ZenView({ currentTrack, playing, onExit, onToggle, onNext, onPre
           animation: "none",
         }}
         onClick={onExit}
-        aria-label="Exit zen mode"
+        aria-label="Salir del modo zen"
       >
         <CloseIcon size={18} />
       </button>
@@ -89,17 +81,17 @@ export function ZenView({ currentTrack, playing, onExit, onToggle, onNext, onPre
           transition: "opacity 0.5s ease-in-out",
         }}
       >
-        <button onClick={onPrevious} className="zen-view__btn" aria-label="Previous track">
+        <button onClick={onPrevious} className="zen-view__btn" aria-label="Pista anterior">
           <PrevIcon />
         </button>
         <button
           onClick={onToggle}
           className="zen-view__btn zen-view__btn--play"
-          aria-label={playing ? "Pause" : "Play"}
+          aria-label={playing ? "Pausar" : "Reproducir"}
         >
           {playing ? <PauseIcon size={22} /> : <PlayIcon size={22} />}
         </button>
-        <button onClick={onNext} className="zen-view__btn" aria-label="Next track">
+        <button onClick={onNext} className="zen-view__btn" aria-label="Pista siguiente">
           <NextIcon />
         </button>
       </div>

@@ -20,19 +20,14 @@ impl AudioAnalyzer {
         }
     }
 
-    pub fn push_amplitude(&self, amplitude: f32) {
-        if let Ok(mut buf) = self.buffer.lock() {
-            if buf.len() >= BUFFER_SIZE {
-                buf.pop_front();
-            }
-            buf.push_back(amplitude);
-        }
-    }
-
     pub fn get_data(&self) -> AudioData {
         let buf = match self.buffer.lock() {
             Ok(b) => b,
-            Err(_) => return AudioData { bins: vec![0.0; NUM_BINS] },
+            Err(_) => {
+                return AudioData {
+                    bins: vec![0.0; NUM_BINS],
+                }
+            }
         };
         let bins: Vec<f32> = if buf.is_empty() {
             vec![0.0; NUM_BINS]

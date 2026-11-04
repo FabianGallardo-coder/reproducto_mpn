@@ -1,3 +1,5 @@
+import type { MouseEvent } from "react";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import type { Track } from "../../../types";
 import { formatTime } from "../../../lib/format";
 import { useCoverArt } from "../../../lib/useCoverArt";
@@ -27,13 +29,23 @@ export function MiniView({
   const coverUrl = useCoverArt(currentTrack?.path);
   const duration = currentTrack?.duration ?? 0;
 
+  // data-tauri-drag-region only reacts to the exact element, so children like
+  // the cover or title blocked dragging. Drag from anywhere except controls.
+  const handleDragStart = (e: MouseEvent<HTMLDivElement>) => {
+    if (e.button !== 0) return;
+    if ((e.target as HTMLElement).closest("button, input, a")) return;
+    e.preventDefault();
+    getCurrentWindow().startDragging().catch((err) => {
+      console.error("Failed to drag mini window:", err);
+    });
+  };
+
   return (
-    <div className="mini-view">
+    <div className="mini-view" onMouseDown={handleDragStart}>
       <div className="mini-view__card">
-        <button className="mini-view__expand" onClick={onExpand} aria-label="Expand">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="15 3 21 3 21 9" /><polyline points="9 21 3 21 3 15" />
-            <line x1="21" y1="3" x2="14" y2="10" /><line x1="3" y1="21" x2="10" y2="14" />
+        <button className="mini-view__close" onClick={onExpand} aria-label="Expandir">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
           </svg>
         </button>
         <div className="mini-view__row">
@@ -45,18 +57,18 @@ export function MiniView({
             </div>
           )}
           <div className="mini-view__info">
-            <div className="mini-view__title">{currentTrack?.title ?? "No track"}</div>
+            <div className="mini-view__title">{currentTrack?.title ?? "Nada en reproducción"}</div>
             <div className="mini-view__artist">{currentTrack?.artist ?? ""}</div>
           </div>
         </div>
         <div className="mini-view__controls">
-          <button className="mini-view__btn" onClick={onPrevious} aria-label="Previous track">
+          <button className="mini-view__btn" onClick={onPrevious} aria-label="Pista anterior">
             <PrevIcon size={20} />
           </button>
-          <button className="mini-view__btn mini-view__btn--play" onClick={onToggle} aria-label={playing ? "Pause" : "Play"}>
+          <button className="mini-view__btn mini-view__btn--play" onClick={onToggle} aria-label={playing ? "Pausar" : "Reproducir"}>
             {playing ? <PauseIcon size={18} /> : <PlayIcon size={18} />}
           </button>
-          <button className="mini-view__btn" onClick={onNext} aria-label="Next track">
+          <button className="mini-view__btn" onClick={onNext} aria-label="Pista siguiente">
             <NextIcon size={20} />
           </button>
         </div>
@@ -70,7 +82,7 @@ export function MiniView({
             step={0.1}
             value={positionValue}
             onChange={(e) => onSeek(parseFloat(e.target.value))}
-            aria-label="Seek position"
+            aria-label="Posición"
           />
           <span className="mini-view__time">{formatTime(duration)}</span>
         </div>

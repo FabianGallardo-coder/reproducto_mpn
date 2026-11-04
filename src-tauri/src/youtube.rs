@@ -1,85 +1,63 @@
-use serde::Serialize;
-
-#[derive(Debug, Clone, Serialize)]
-pub struct YouTubeMeta {
-    pub title: String,
-    pub artist: String,
-    pub duration: f64,
-    pub thumbnail: String,
-    pub stream_url: String,
-}
-
 pub fn is_youtube_url(url: &str) -> bool {
-    url.starts_with("https://www.youtube.com/")
-        || url.starts_with("https://youtube.com/")
-        || url.starts_with("https://youtu.be/")
-        || url.starts_with("http://www.youtube.com/")
-        || url.starts_with("http://youtube.com/")
-        || url.starts_with("http://youtu.be/")
+    if let Ok(parsed) = url::Url::parse(url) {
+        if !matches!(parsed.scheme(), "http" | "https") { return false; }
+        matches!(parsed.host_str(), Some("www.youtube.com" | "youtube.com" | "youtu.be"))
+    } else {
+        false
+    }
 }
 
-pub fn fetch_metadata(url: &str) -> Result<YouTubeMeta, String> {
-    if !is_youtube_url(url) {
-        return Err("URL is not a YouTube link".into());
-    }
-    let output = std::process::Command::new("yt-dlp")
-        .args([
-            "--dump-json",
-            "--no-playlist",
-            "--no-warnings",
-            "--",
-            url,
-        ])
-        .output()
-        .map_err(|e| format!("yt-dlp not found: {e}. Install with: pip install yt-dlp"))?;
-
-    if !output.status.success() {
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        return Err(format!("yt-dlp error: {stderr}"));
-    }
-
-    let json: serde_json::Value = serde_json::from_slice(&output.stdout)
-        .map_err(|e| format!("Failed to parse yt-dlp output: {e}"))?;
-
-    Ok(YouTubeMeta {
-        title: json["title"].as_str().unwrap_or("Unknown").to_string(),
-        artist: json["uploader"].as_str().unwrap_or("Unknown").to_string(),
-        duration: json["duration"].as_f64().unwrap_or(0.0),
-        thumbnail: json["thumbnail"].as_str().unwrap_or("").to_string(),
-        stream_url: String::new(), // filled separately via -f bestaudio
-    })
+pub(crate) fn summarize_stderr(stderr: &[u8]) -> String {
+    let text = String::from_utf8_lossy(stderr);
+    let line = text
+        .lines()
+        .rev()
+        .find(|l| l.contains("ERROR"))
+        .or_else(|| text.lines().rev().find(|l| !l.trim().is_empty()))
+        .unwrap_or("")
+        .trim();
+    line.chars().take(200).collect()
 }
 
-pub fn get_audio_stream_url(url: &str) -> Result<String, String> {
-    if !is_youtube_url(url) {
-        return Err("URL is not a YouTube link".into());
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn youtube_urls_accepted() {
+        assert!(is_youtube_url(
+            "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+        ));
+        assert!(is_youtube_url("https://youtube.com/watch?v=abc"));
+        assert!(is_youtube_url("https://youtu.be/dQw4w9WgXcQ"));
+        assert!(is_youtube_url("http://www.youtube.com/watch?v=123"));
+        assert!(is_youtube_url("https://YouTube.COM/watch?v=123"));
     }
 
-    let output = std::process::Command::new("yt-dlp")
-        .args([
-            "-f", "bestaudio[ext=m4a]/bestaudio[ext=webm]/bestaudio/best",
-            "-g",
-            "--no-playlist",
-            "--no-warnings",
-            "--",
-            url,
-        ])
-        .output()
-        .map_err(|e| format!("yt-dlp not found: {e}. Install with: pip install yt-dlp"))?;
-
-    if !output.status.success() {
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        return Err(format!("yt-dlp error: {stderr}"));
+    #[test]
+    fn non_youtube_urls_rejected() {
+        assert!(!is_youtube_url("https://vimeo.com/123"));
+        assert!(!is_youtube_url("https://soundcloud.com/track"));
+        assert!(!is_youtube_url(
+            "https://www.youtube-nocookie.com/embed/123"
+        ));
+        assert!(!is_youtube_url("https://www.notyoutube.com/watch?v=123"));
+        assert!(!is_youtube_url("not a url"));
+        assert!(!is_youtube_url(""));
     }
 
-    let stream_url = String::from_utf8(output.stdout)
-        .map_err(|e| format!("Invalid output: {e}"))?
-        .trim()
-        .to_string();
-
-    if stream_url.is_empty() {
-        return Err("No stream URL returned".into());
+    #[test]
+    fn youtube_with_path_variations() {
+        assert!(is_youtube_url("https://www.youtube.com/shorts/abc123"));
+        assert!(is_youtube_url("https://www.youtube.com/live/abc123"));
+        assert!(is_youtube_url("https://www.youtube.com/embed/abc123"));
+        assert!(is_youtube_url("https://www.youtube.com/channel/UC123"));
     }
 
-    Ok(stream_url)
+    #[test]
+    fn scheme_variations() {
+        assert!(is_youtube_url("https://youtu.be/abc"));
+        assert!(is_youtube_url("http://youtu.be/abc"));
+        assert!(!is_youtube_url("ftp://youtu.be/abc"));
+    }
 }

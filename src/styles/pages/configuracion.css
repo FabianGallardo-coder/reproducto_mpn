@@ -1,0 +1,100 @@
+.settings__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  padding: var(--sp-4) var(--sp-5);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-secondary);
+}
+
+.settings__info { min-width: 0; }
+.settings__label { font-size: var(--fs-base); font-weight: 700; }
+
+.settings__value {
+  margin-top: var(--sp-1);
+  color: var(--text-secondary);
+  font-size: var(--fs-sm);
+  overflow-wrap: anywhere;
+}
+
+.settings__actions { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.settings__note { margin-top: var(--sp-3); color: var(--text-secondary); font-size: var(--fs-xs); }
+.settings__group { display: flex; flex-wrap: wrap; gap: var(--sp-3); }
+
+.swatch,
+.option {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s, background-color 0.15s;
+}
+
+.swatch:hover,
+.option:hover { border-color: rgba(var(--accent-rgb), 0.5); }
+
+.swatch--active,
+.option--active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.swatch__dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+}
+
+.option {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 220px;
+  border-radius: var(--radius-lg);
+  text-align: left;
+}
+
+.option__title { font-size: var(--fs-base); font-weight: 700; }
+.option__hint { color: var(--text-secondary); font-size: var(--fs-xs); font-weight: 400; }
+
+.settings__shortcuts {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-sm);
+}
+
+.settings__shortcuts th,
+.settings__shortcuts td {
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: 1px solid var(--glass-border);
+  text-align: left;
+}
+
+.settings__shortcuts thead th {
+  color: var(--text-secondary);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.settings__shortcuts kbd {
+  padding: 2px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-tertiary);
+  font: inherit;
+  font-size: var(--fs-xs);
+  white-space: nowrap;
+}
