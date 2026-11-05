@@ -91,7 +91,7 @@ function App() {
   }, [player.playExternalFile]);
 
   const showAbout = useCallback(() => {
-    window.alert(`FlowPlayer v0.1.0\nUn reproductor de música de escritorio construido con Tauri v2, Rust y React.`);
+    window.alert(`FlowPlayer v0.1.1\nUn reproductor de música construido con Tauri v2, Rust y React.`);
   }, []);
 
   const showShortcuts = useCallback(() => {

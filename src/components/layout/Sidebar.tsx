@@ -1,5 +1,6 @@
 import { memo, useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import type { Mode } from "../../types";
+import { isModeAvailable } from "../../lib/startMode";
 import { useNavigation, type LibrarySection, type Route } from "../../hooks/useNavigation";
 import { usePlayerActions, usePlayerState } from "../../hooks/usePlayerStore";
 import {
@@ -202,7 +203,7 @@ export function Sidebar({ mode, onModeChange }: Props) {
       <section className="sidebar__modes" aria-labelledby="sidebar-modes-title">
         <h2 id="sidebar-modes-title" className="sidebar__section-title">Modos</h2>
         <div className="sidebar__mode-list">
-          {MODES.map((entry) => (
+          {MODES.filter((entry) => isModeAvailable(entry.mode)).map((entry) => (
             <ModeButton
               key={entry.mode}
               label={entry.label}

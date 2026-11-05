@@ -4,6 +4,7 @@ import type { Track } from "../../../types";
 import { formatTime } from "../../../lib/format";
 import { isAndroid } from "../../../lib/platform";
 import { useCoverArt } from "../../../lib/useCoverArt";
+import { youtubeIdFromPath, youtubeThumbnailUrl } from "../../../types/youtube";
 import { MusicIcon, PrevIcon, NextIcon, PlayIcon, PauseIcon } from "../../ui/Icons";
 
 interface Props {
@@ -27,8 +28,11 @@ export function MiniView({
   onSeek,
   onExpand,
 }: Props) {
-  const coverUrl = useCoverArt(currentTrack?.path);
+  const localCover = useCoverArt(currentTrack?.path);
+  const videoId = currentTrack ? youtubeIdFromPath(currentTrack.path) : null;
+  const coverUrl = localCover ?? (videoId ? youtubeThumbnailUrl(videoId) : null);
   const duration = currentTrack?.duration ?? 0;
+  const live = currentTrack !== null && duration <= 0;
 
   // data-tauri-drag-region only reacts to the exact element, so children like
   // the cover or title blocked dragging. Drag from anywhere except controls.
@@ -81,11 +85,12 @@ export function MiniView({
             min={0}
             max={duration || 1}
             step={0.1}
-            value={positionValue}
+            value={live ? 0 : positionValue}
             onChange={(e) => onSeek(parseFloat(e.target.value))}
             aria-label="Posición"
+            disabled={live}
           />
-          <span className="mini-view__time">{formatTime(duration)}</span>
+          <span className="mini-view__time">{live ? "En vivo" : formatTime(duration)}</span>
         </div>
       </div>
     </div>

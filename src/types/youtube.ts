@@ -71,6 +71,31 @@ export function youtubeIdFromUrl(value: string): string | null {
   }
 }
 
+export type YouTubeInput =
+  | { kind: "text" }
+  | { kind: "video"; id: string }
+  | { kind: "playlist"; url: string }
+  | { kind: "invalid" };
+
+/** Tells apart a plain search from a pasted link so a link never runs as a text search. */
+export function classifyYouTubeInput(value: string): YouTubeInput {
+  const text = value.trim();
+  if (!/^https?:\/\//i.test(text)) return { kind: "text" };
+  const id = youtubeIdFromUrl(text);
+  if (id) return { kind: "video", id };
+  try {
+    const url = new URL(text);
+    const list = url.searchParams.get("list");
+    if (["youtube.com", "www.youtube.com", "m.youtube.com"].includes(url.hostname.toLowerCase())
+      && url.pathname === "/playlist" && list && /^[A-Za-z0-9_-]{2,64}$/.test(list)) {
+      return { kind: "playlist", url: `https://www.youtube.com/playlist?list=${encodeURIComponent(list)}` };
+    }
+  } catch {
+    return { kind: "invalid" };
+  }
+  return { kind: "invalid" };
+}
+
 export function youtubeIdFromPath(path: string): string | null {
   if (!path.startsWith(YOUTUBE_PATH_PREFIX)) return null;
   const id = path.slice(YOUTUBE_PATH_PREFIX.length);

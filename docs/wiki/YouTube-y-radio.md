@@ -17,7 +17,7 @@ YouTube decide si un video puede incrustarse, y puede mostrar anuncios o restric
 
 ## Android: abrir un enlace
 
-En **Buscar**, pegá una URL de `youtube.com` o `youtu.be` en **Abrir enlace de YouTube**. El video usa el iframe oficial, flotante o acoplado a Reproduciendo; el audio local se detiene antes de iniciar el video. Al ocultar la app, entrar en Zen o en Mini, se solicita la pausa.
+En **Buscar**, elegí YouTube y pegá una URL de `youtube.com` o `youtu.be` en **Abrir enlace de YouTube**. El formulario también aparece después de los resultados de Todo. El video usa el iframe oficial, flotante o acoplado a Reproduciendo; el audio local se detiene antes de iniciar el video. Al ocultar la app o entrar en Zen se solicita la pausa. Android ofrece Normal y Zen, sin Flow ni Mini.
 
 No hay reproducción de YouTube en el servicio nativo de segundo plano, extracción de audio, búsqueda integrada ni descargas Android. La búsqueda remota requiere una futura integración con la API oficial; no se incluye una clave API.
 
@@ -38,9 +38,13 @@ Descargá únicamente contenido propio o autorizado y respetá las condiciones d
 
 Abrí **Radio** en la barra lateral, buscá por nombre o género y elegí una emisora. También podés agregar una URL de streaming con sus datos.
 
-Los presets incluyen emisoras de SomaFM. La disponibilidad, el formato y la continuidad del stream dependen del proveedor. Una página web de una radio no necesariamente es una URL de audio reproducible.
+Windows y Android incluyen el mismo catálogo de **92 emisoras**: 8 de SomaFM y 84 del listado argentino AM/FM y regional. La lista viene dentro del paquete y no requiere agregar las emisoras manualmente ni descargar un directorio al iniciar. Las emisoras personales se agregan a continuación del catálogo y no lo reemplazan.
 
-Android incluye Groove Salad y permite agregar emisoras propias; requiere URLs de audio **HTTPS**. La sesión Media3 está preparada para continuar audio local y radio en segundo plano. La continuidad real de cada emisora, controles de notificación y restricciones de batería requieren comprobación en el dispositivo.
+La lista incluida no significa audio sin conexión: escuchar requiere Internet. La disponibilidad, el formato y la continuidad del stream dependen del proveedor; no se garantiza que todas las URLs estén activas. Una página web de una radio no necesariamente es una URL de audio reproducible.
+
+Android permite agregar emisoras propias con URLs de audio **HTTPS**. Las 6 URLs HTTP heredadas del catálogo también se aceptan: la versión de distribución limita las excepciones de tráfico sin cifrar a sus servidores, sin habilitar HTTP para cualquier dominio. El audio HTTP no está cifrado. Si una emisora cambia de servidor o redirige hacia otro host HTTP, puede requerir una actualización del catálogo y de esas excepciones.
+
+La sesión Media3 está preparada para continuar audio local y radio en segundo plano. La continuidad real de cada emisora, controles de notificación y restricciones de batería requieren comprobación en el dispositivo.
 
 ## Privacidad y conexión
 

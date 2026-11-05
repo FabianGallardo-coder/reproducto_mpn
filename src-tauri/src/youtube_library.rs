@@ -352,6 +352,12 @@ pub fn youtube_library(state: State<'_, LibraryState>) -> Result<Catalog, String
     Ok(snapshot)
 }
 
+/// A pasted URL must never reach `ytsearch`, which would return unrelated videos.
+fn looks_like_link(query: &str) -> bool {
+    let text = query.trim_start().to_ascii_lowercase();
+    text.starts_with("http://") || text.starts_with("https://")
+}
+
 #[tauri::command]
 pub async fn youtube_search(
     app: tauri::AppHandle,
@@ -360,6 +366,9 @@ pub async fn youtube_search(
 ) -> Result<Vec<Item>, String> {
     if query.trim().is_empty() || query.len() > 500 || !(1..=10).contains(&page) {
         return Err("Search requires text and a page between 1 and 10".into());
+    }
+    if looks_like_link(&query) {
+        return Err("Links must be inspected, not searched".into());
     }
     let value = run_json(
         &app,
@@ -813,6 +822,14 @@ async fn download_one(
 mod tests {
     use super::*;
     use serde_json::json;
+
+    #[test]
+    fn links_are_never_treated_as_search_text() {
+        assert!(looks_like_link("https://www.youtube.com/watch?v=L50II6zJy9U"));
+        assert!(looks_like_link("  HTTP://youtu.be/L50II6zJy9U"));
+        assert!(!looks_like_link("linkin park https"));
+        assert!(!looks_like_link("youtube.com/watch?v=L50II6zJy9U"));
+    }
     struct Fixture(PathBuf);
     impl Fixture {
         fn new() -> Self {

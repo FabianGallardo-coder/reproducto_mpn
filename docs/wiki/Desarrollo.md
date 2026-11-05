@@ -28,6 +28,8 @@ FlowPlayer tiene dos rutas de reproducción:
 
 El comando Android `scan_folder` devuelve `{ tracks, warnings }`. `api.scanFolder` adapta la respuesta al contrato frontend de pistas y comunica los archivos omitidos. Los errores de permisos y de carpeta siguen siendo errores explícitos. Las URI son sensibles a mayúsculas y no se normalizan como rutas Windows.
 
+El catálogo compartido de radio está en `src-tauri/radio/stations.json`. Rust lo incluye en el ejecutable mediante `include_str!`; Gradle empaqueta ese mismo archivo como asset `stations.json`, que Kotlin lee para `list_radio_stations`. Ambos agregan las radios personales después de los presets. No mantengas listas separadas por plataforma. Si agregás una URL HTTP, revisá también `app/src/main/res/xml/network_security_config.xml`: la distribución solo permite HTTP en los hosts explícitos del catálogo; el recurso debug conserva el acceso HTTP necesario para desarrollo.
+
 `src/styles/mobile.css` limita las adaptaciones a `html[data-platform="android"]`. El transporte se adapta al teclado y a pantallas horizontales; Reproduciendo usa desplazamiento vertical. Los modos móviles son vistas internas, no cambios de geometría de ventanas nativas.
 
 ## Comandos
@@ -79,7 +81,7 @@ Los bundles quedan en `src-tauri\target\release\bundle`. Comprobá el sidecar yt
 
 ### APK ARM64 de desarrollo
 
-Requisitos adicionales: JDK 21, Android SDK con plataforma y Build Tools 36, NDK `27.2.12479018`, herramientas de plataforma y target Rust `aarch64-linux-android`. Android Studio puede instalar el SDK/NDK; revisá y aceptá las licencias desde sus herramientas oficiales.
+Requisitos adicionales: JDK 21 (JDK 17 también compiló correctamente; Gradle 8.14 no admite JDK 25 o superior, así que definí `JAVA_HOME` en la terminal si tu JDK predeterminado es más nuevo), Android SDK con plataforma y Build Tools 36, NDK `27.2.12479018`, herramientas de plataforma y target Rust `aarch64-linux-android`. Android Studio puede instalar el SDK/NDK; revisá y aceptá las licencias desde sus herramientas oficiales.
 
 Configurá las rutas para tu equipo en la misma terminal PowerShell (no hace falta cambiar el Java global):
 
@@ -102,6 +104,22 @@ adb -s SERIAL install -r src-tauri\gen\android\app\build\outputs\apk\universal\d
 ```
 
 Reemplazá `SERIAL` por el identificador de tu dispositivo. La firma debug es solo para pruebas: una APK de distribución requiere firma de release propia y QA adicional. No subas keystores, contraseñas, `local.properties`, bibliotecas generadas ni APK al repositorio de código. La CI actual valida frontend y Rust de Windows, no compila Android.
+
+### APK ARM64 de release firmado
+
+Creá y respaldá una clave privada fuera del repositorio. En esa misma ubicación guardá un archivo de propiedades Java con `storeFile`, `storePassword`, `keyAlias` y `keyPassword`. Restringí su acceso al usuario que compila; no imprimas su contenido ni lo adjuntes a informes.
+
+Con las rutas JDK/SDK/NDK anteriores configuradas:
+
+```powershell
+$env:FLOWPLAYER_SIGNING_PROPERTIES = 'C:\ruta\privada\signing.properties'
+npm run tauri android build -- --apk --target aarch64 --ci
+Remove-Item Env:\FLOWPLAYER_SIGNING_PROPERTIES
+```
+
+La salida es `src-tauri\gen\android\app\build\outputs\apk\universal\release\app-universal-release.apk`, solo ARM64. Sin las propiedades de firma, no se debe distribuir el APK: verificá siempre el certificado, versión, arquitectura y alineación de 16 KB con `apksigner`, `aapt` y `zipalign`. El release usa minificación y las restricciones HTTP de distribución, no el override de debug.
+
+La clave debe conservarse para todas las futuras actualizaciones. Android no permite actualizar una instalación debug con una clave release diferente; no desinstales ni borres datos para resolverlo sin autorización explícita. Probá el APK release exacto antes de publicarlo, no solo la compilación debug.
 
 ## Cambios mantenibles
 

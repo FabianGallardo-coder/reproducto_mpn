@@ -4,7 +4,8 @@ import { Page, Section } from "../components/ui/Page";
 import { ConfirmAction } from "../components/ui/ConfirmAction";
 import { ACCENTS, useAccentColor } from "../hooks/useAccentColor";
 import { usePlayHistory } from "../hooks/usePlayHistory";
-import { readStartMode, writeStartMode, type StartMode } from "../lib/startMode";
+import { isModeAvailable, readStartMode, writeStartMode, type StartMode } from "../lib/startMode";
+import { isAndroid } from "../lib/platform";
 import { SHORTCUTS } from "../lib/shortcuts";
 import type { PageProps } from "./pageTypes";
 
@@ -58,7 +59,7 @@ export function ConfiguracionPage({ controls }: PageProps) {
 
       <Section id="modes" title="Modo al iniciar">
         <div className="settings__group" role="radiogroup" aria-label="Modo al iniciar">
-          {START_MODES.map((entry) => (
+          {START_MODES.filter((entry) => isModeAvailable(entry.id)).map((entry) => (
             <button
               key={entry.id}
               type="button"
@@ -72,7 +73,7 @@ export function ConfiguracionPage({ controls }: PageProps) {
             </button>
           ))}
         </div>
-        <p className="settings__note">Zen y Mini se activan desde la sección «Modos» de la barra lateral.</p>
+        <p className="settings__note">{isAndroid ? "Zen se activa desde la sección «Modos» de la barra lateral." : "Zen y Mini se activan desde la sección «Modos» de la barra lateral."}</p>
       </Section>
 
       <Section id="shortcuts" title="Atajos de teclado">
@@ -103,7 +104,7 @@ export function ConfiguracionPage({ controls }: PageProps) {
       </Section>
 
       <Section id="about" title="Acerca de">
-        <p className="settings__value">FlowPlayer 0.1.0 — reproductor de escritorio hecho con Tauri 2, Rust y React.</p>
+        <p className="settings__value">FlowPlayer 0.1.1 — reproductor de música hecho con Tauri 2, Rust y React.</p>
         <button type="button" className="button" onClick={controls.onShowAbout}>Ver detalles</button>
       </Section>
     </Page>

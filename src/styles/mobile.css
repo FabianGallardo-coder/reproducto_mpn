@@ -81,6 +81,9 @@ html[data-platform="android"] .page {
 }
 
 html[data-platform="android"] .page__body { flex: 1 0 auto; gap: 24px; }
+html[data-platform="android"] .page--biblioteca .page__body { flex: 1 1 0; overflow-y: auto; }
+html[data-platform="android"] .page--biblioteca .chip-row { flex-shrink: 0; }
+html[data-platform="android"] .page--biblioteca .track-list { min-height: 0; }
 html[data-platform="android"] .page__heading { width: 100%; }
 html[data-platform="android"] .page__subtitle { line-height: 1.45; }
 html[data-platform="android"] .section__header { flex-wrap: wrap; }

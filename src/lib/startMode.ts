@@ -1,12 +1,17 @@
 import type { Mode } from "../types";
+import { isAndroid } from "./platform";
 
 export type StartMode = Extract<Mode, "normal" | "flow">;
 
 const KEY = "flowplayer-start-mode";
 
+export function isModeAvailable(mode: Mode): boolean {
+  return !isAndroid || mode === "normal" || mode === "zen";
+}
+
 export function readStartMode(): StartMode {
   try {
-    return localStorage.getItem(KEY) === "flow" ? "flow" : "normal";
+    return isModeAvailable("flow") && localStorage.getItem(KEY) === "flow" ? "flow" : "normal";
   } catch {
     return "normal";
   }

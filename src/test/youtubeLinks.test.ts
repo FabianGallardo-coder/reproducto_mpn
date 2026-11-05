@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { youtubeIdFromUrl } from "../types/youtube";
+import { classifyYouTubeInput, youtubeIdFromUrl } from "../types/youtube";
 
 describe("YouTube link validation", () => {
   it.each([
@@ -23,5 +23,30 @@ describe("YouTube link validation", () => {
     "ftp://youtube.com/watch?v=dQw4w9WgXcQ",
   ])("rejects unsupported or invalid URL %s", (url) => {
     expect(youtubeIdFromUrl(url)).toBeNull();
+  });
+});
+
+describe("classifyYouTubeInput", () => {
+  it("treats text as a search", () => {
+    expect(classifyYouTubeInput("linkin park")).toEqual({ kind: "text" });
+  });
+
+  it("keeps the exact video of a link that also carries a mix playlist", () => {
+    expect(classifyYouTubeInput("https://www.youtube.com/watch?v=L50II6zJy9U&list=RDL50II6zJy9U&start_radio=1"))
+      .toEqual({ kind: "video", id: "L50II6zJy9U" });
+  });
+
+  it("recognizes playlist-only links and normalizes them", () => {
+    expect(classifyYouTubeInput("https://m.youtube.com/playlist?list=PLabc123&si=x"))
+      .toEqual({ kind: "playlist", url: "https://www.youtube.com/playlist?list=PLabc123" });
+  });
+
+  it.each([
+    "https://example.com/watch?v=dQw4w9WgXcQ",
+    "https://youtube.com.evil.example/playlist?list=PLabc123",
+    "https://www.youtube.com/@channel",
+    "https://www.youtube.com/playlist",
+  ])("marks %s as invalid", (url) => {
+    expect(classifyYouTubeInput(url)).toEqual({ kind: "invalid" });
   });
 });

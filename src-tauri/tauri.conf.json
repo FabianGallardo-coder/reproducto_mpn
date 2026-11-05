@@ -1,6 +1,6 @@
 {
   "productName": "FlowPlayer",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "identifier": "com.flowplayer.app",
   "bundle": {
     "active": true,
@@ -49,7 +49,7 @@
       }
     ],
     "security": {
-      "csp": "default-src 'self'; script-src 'self' https://www.youtube.com https://s.ytimg.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: tauri: asset: https://i.ytimg.com; font-src 'self'; connect-src 'self' ipc: http://ipc.localhost; frame-src https://www.youtube.com https://www.youtube-nocookie.com"
+      "csp": "default-src 'self'; script-src 'self' https://www.youtube.com https://s.ytimg.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: tauri: asset: https://i.ytimg.com; font-src 'self'; connect-src 'self' ipc: http://ipc.localhost; frame-src https://www.youtube.com https://www.youtube-nocookie.com"
     }
   },
   "plugins": {

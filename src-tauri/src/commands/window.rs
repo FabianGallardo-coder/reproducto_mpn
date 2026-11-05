@@ -11,8 +11,25 @@ pub struct Geometry {
 
 #[derive(Clone, Copy, Debug)]
 struct SavedWindow {
-    geometry: Geometry,
+    /// `None` when the window had no usable frame (e.g. it was minimized) at the time.
+    geometry: Option<Geometry>,
     maximized: bool,
+}
+
+/// Smallest and default desktop window size, in logical pixels.
+const MIN_LOGICAL: (f64, f64) = (800.0, 600.0);
+const DEFAULT_LOGICAL: (f64, f64) = (1024.0, 768.0);
+
+/// A minimized Windows window reports a tiny frame parked around (-32000, -32000);
+/// restoring that would leave the app unusable.
+pub fn is_plausible_geometry(g: Geometry) -> bool {
+    g.width >= 300 && g.height >= 200 && g.x > -30_000 && g.y > -30_000
+}
+
+/// Whether a window with this client size is below the desktop minimum.
+pub fn below_minimum(inner: PhysicalSize<u32>, scale: f64) -> bool {
+    f64::from(inner.width) < (MIN_LOGICAL.0 * scale).floor()
+        || f64::from(inner.height) < (MIN_LOGICAL.1 * scale).floor()
 }
 
 /// Desktop window geometry saved while Mini/Zen are active, so leaving them
@@ -79,22 +96,55 @@ fn remember_desktop_window(
     if slot.is_some() {
         return Ok(());
     }
+    if window.is_minimized().map_err(|e| e.to_string())? {
+        window.unminimize().map_err(|e| e.to_string())?;
+    }
     let maximized = window.is_maximized().map_err(|e| e.to_string())?;
     if maximized {
         window.unmaximize().map_err(|e| e.to_string())?;
     }
-    *slot = Some(SavedWindow { geometry: outer_geometry(window)?, maximized });
+    let geometry = outer_geometry(window)?;
+    *slot = Some(SavedWindow {
+        geometry: is_plausible_geometry(geometry).then_some(geometry),
+        maximized,
+    });
+    Ok(())
+}
+
+/// Grows a window that is smaller than the desktop minimum (left over from Mini or a bad saved frame).
+fn ensure_usable_size(window: &tauri::WebviewWindow, area: Option<Geometry>) -> Result<(), String> {
+    if window.is_maximized().map_err(|e| e.to_string())? {
+        return Ok(());
+    }
+    let scale = window.scale_factor().map_err(|e| e.to_string())?;
+    let inner = window.inner_size().map_err(|e| e.to_string())?;
+    if !below_minimum(inner, scale) {
+        return Ok(());
+    }
+    window
+        .set_size(tauri::LogicalSize::new(DEFAULT_LOGICAL.0, DEFAULT_LOGICAL.1))
+        .map_err(|e| e.to_string())?;
+    if let Some(area) = area {
+        let current = outer_geometry(window)?;
+        let fitted = fit_to_area(current, area);
+        if fitted != current {
+            place_outer(window, fitted)?;
+        }
+    }
     Ok(())
 }
 
 fn apply_desktop_window(window: &tauri::WebviewWindow, memory: &WindowMemory) -> Result<(), String> {
+    if window.is_minimized().map_err(|e| e.to_string())? {
+        window.unminimize().map_err(|e| e.to_string())?;
+    }
     window.set_always_on_bottom(false).map_err(|e| e.to_string())?;
     window.set_always_on_top(false).map_err(|e| e.to_string())?;
     window.set_skip_taskbar(false).map_err(|e| e.to_string())?;
     window.set_decorations(true).map_err(|e| e.to_string())?;
     window.set_resizable(true).map_err(|e| e.to_string())?;
     window
-        .set_min_size(Some(tauri::LogicalSize::new(800.0, 600.0)))
+        .set_min_size(Some(tauri::LogicalSize::new(MIN_LOGICAL.0, MIN_LOGICAL.1)))
         .map_err(|e| e.to_string())?;
 
     let area = work_area(window)?;
@@ -102,11 +152,14 @@ fn apply_desktop_window(window: &tauri::WebviewWindow, memory: &WindowMemory) ->
 
     match saved {
         Some(saved) => {
-            let target = match area {
-                Some(area) => fit_to_area(saved.geometry, area),
-                None => saved.geometry,
-            };
-            place_outer(window, target)?;
+            if let Some(geometry) = saved.geometry {
+                let target = match area {
+                    Some(area) => fit_to_area(geometry, area),
+                    None => geometry,
+                };
+                place_outer(window, target)?;
+            }
+            ensure_usable_size(window, area)?;
             if saved.maximized {
                 window.maximize().map_err(|e| e.to_string())?;
             }
@@ -115,6 +168,7 @@ fn apply_desktop_window(window: &tauri::WebviewWindow, memory: &WindowMemory) ->
             if window.is_maximized().map_err(|e| e.to_string())? {
                 return Ok(());
             }
+            ensure_usable_size(window, area)?;
             let Some(area) = area else { return Ok(()) };
             let current = outer_geometry(window)?;
             let fitted = fit_to_area(current, area);
@@ -195,6 +249,28 @@ mod tests {
     use super::*;
 
     const AREA: Geometry = Geometry { x: 0, y: 0, width: 1366, height: 728 };
+
+    #[test]
+    fn minimized_window_frame_is_not_a_usable_geometry() {
+        let minimized = Geometry { x: -32000, y: -32000, width: 160, height: 28 };
+        assert!(!is_plausible_geometry(minimized));
+        assert!(!is_plausible_geometry(Geometry { x: -32000, y: -32000, width: 1920, height: 1080 }));
+        assert!(!is_plausible_geometry(Geometry { x: 0, y: 0, width: 160, height: 40 }));
+    }
+
+    #[test]
+    fn regular_and_secondary_monitor_frames_are_usable() {
+        assert!(is_plausible_geometry(Geometry { x: 170, y: 0, width: 1024, height: 768 }));
+        assert!(is_plausible_geometry(Geometry { x: -1920, y: 40, width: 1280, height: 720 }));
+    }
+
+    #[test]
+    fn detects_windows_smaller_than_the_desktop_minimum() {
+        assert!(below_minimum(PhysicalSize::new(160, 40), 1.0));
+        assert!(below_minimum(PhysicalSize::new(1000, 700), 1.5));
+        assert!(!below_minimum(PhysicalSize::new(800, 600), 1.0));
+        assert!(!below_minimum(PhysicalSize::new(1200, 900), 1.5));
+    }
 
     #[test]
     fn fit_shrinks_window_taller_than_work_area() {

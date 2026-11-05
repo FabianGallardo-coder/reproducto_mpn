@@ -126,4 +126,42 @@ describe("MiniView", () => {
     expect(screen.getByText("0:45")).toBeInTheDocument();
     expect(screen.getByText("3:25")).toBeInTheDocument();
   });
+
+  it("shows a live label and disables seeking for streams without duration", () => {
+    render(
+      <MiniView
+        currentTrack={{ ...track, path: "https://radio.example/stream", duration: 0 }}
+        playing
+        positionValue={30}
+        onToggle={vi.fn()}
+        onNext={vi.fn()}
+        onPrevious={vi.fn()}
+        onSeek={vi.fn()}
+        onExpand={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("slider", { name: "Posición" })).toBeDisabled();
+    expect(screen.getByText("En vivo")).toBeInTheDocument();
+  });
+
+  it("uses the YouTube thumbnail when an online video has no embedded cover", () => {
+    render(
+      <MiniView
+        currentTrack={{ ...track, path: "youtube:L50II6zJy9U", album: "YouTube" }}
+        playing
+        positionValue={0}
+        onToggle={vi.fn()}
+        onNext={vi.fn()}
+        onPrevious={vi.fn()}
+        onSeek={vi.fn()}
+        onExpand={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("img", { name: /album art/ })).toHaveAttribute(
+      "src",
+      "https://i.ytimg.com/vi/L50II6zJy9U/hqdefault.jpg",
+    );
+  });
 });

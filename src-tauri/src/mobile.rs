@@ -21,7 +21,8 @@ async fn mobile_command(
 ) -> Result<Value, String> {
     let response = state
         .0
-        .run_mobile_plugin::<Value>("execute", Request { command, args: args.unwrap_or(serde_json::json!({})) })
+        .run_mobile_plugin_async::<Value>("execute", Request { command, args: args.unwrap_or(serde_json::json!({})) })
+        .await
         .map_err(|error| {
             log::error!("Android command failed: {error}");
             error.to_string()

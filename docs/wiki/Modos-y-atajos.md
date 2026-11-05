@@ -13,9 +13,9 @@ Cambiar entre Normal y Flow no debe detener la pista actual. Zen y Mini pausan Y
 
 ## Diferencias en Android
 
-Los cuatro modos son vistas dentro de la misma actividad; no hay ventanas flotantes sobre otras apps. Mini muestra una tarjeta compacta centrada. Zen mantiene salida y transporte táctiles visibles, sin depender de un mouse. La barra lateral permite desplazarse hasta las colecciones y los modos; **+** abre un formulario para crear playlists con botones Crear y Cancelar.
+Android ofrece únicamente Normal y Zen, dentro de la misma actividad. Flow y Mini siguen disponibles en escritorio, pero no aparecen en Android ni pueden activarse con sus atajos. Una preferencia antigua de iniciar en Flow se interpreta como Normal. Zen mantiene salida y transporte táctiles visibles, sin depender de un mouse. La barra lateral permite desplazarse hasta las colecciones y los modos; **+** abre un formulario para crear playlists con botones Crear y Cancelar.
 
-Flow conserva el temporizador y la lista. Visualizador y letras no están disponibles en Android; se informa en pantalla. El teclado virtual no se abre automáticamente al entrar en Buscar, y el transporte se compacta mientras se escribe. Los atajos siguientes son principalmente para escritorio o teclado físico, no gestos del sistema Android.
+Visualizador y letras no están disponibles en Android; se informa en pantalla. El teclado virtual no se abre automáticamente al entrar en Buscar, y el transporte se compacta mientras se escribe. Los atajos siguientes son principalmente para escritorio o teclado físico, no gestos del sistema Android. En Android, los atajos de modos son Alt+N y Alt+Z.
 
 ## Pomodoro y letras
 

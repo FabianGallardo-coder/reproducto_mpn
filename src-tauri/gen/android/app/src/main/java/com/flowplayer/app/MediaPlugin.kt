@@ -37,6 +37,9 @@ class MediaPlugin(private val activity: Activity) : Plugin(activity) {
     private val worker = Executors.newSingleThreadExecutor()
     private val preferences = activity.getSharedPreferences("flowplayer-media", 0)
     private val tracks = mutableMapOf<String, JSONObject>()
+    private val radioCatalog by lazy {
+        activity.assets.open("stations.json").bufferedReader(Charsets.UTF_8).use { it.readText() }
+    }
     private var controller: MediaController? = null
     private var webView: WebView? = null
     private val future = MediaController.Builder(
@@ -137,8 +140,13 @@ class MediaPlugin(private val activity: Activity) : Plugin(activity) {
 
     private fun mediaItem(track: JSONObject): MediaItem {
         val uri = Uri.parse(track.getString("path"))
-        require(uri.scheme == "content" || uri.scheme == "https") {
-            "Solo se permite audio local seleccionado o radio HTTPS"
+        val bundledHttpRadio = uri.scheme == "http" && JSONArray(radioCatalog).let { stations ->
+            (0 until stations.length()).any {
+                stations.getJSONObject(it).getString("url") == uri.toString()
+            }
+        }
+        require(uri.scheme == "content" || uri.scheme == "https" || bundledHttpRadio) {
+            "Solo se permite audio local seleccionado, radio HTTPS o una radio HTTP del catálogo incluido"
         }
         return MediaItem.Builder().setUri(uri).setMediaId(uri.toString())
             .setMediaMetadata(MediaMetadata.Builder().setTitle(track.getString("title"))
@@ -293,10 +301,7 @@ class MediaPlugin(private val activity: Activity) : Plugin(activity) {
                             player.setMediaItem(mediaItem(item)); player.prepare(); player.play(); null
                         }
                         "list_radio_stations" -> {
-                            val list = JSONArray().put(JSONObject()
-                                .put("name", "Groove Salad").put("genre", "Ambient")
-                                .put("description", "SomaFM")
-                                .put("url", "https://ice1.somafm.com/groovesalad-128-mp3"))
+                            val list = JSONArray(radioCatalog)
                             val custom = config().getJSONArray("custom_radio_stations")
                             for (i in 0 until custom.length()) list.put(custom.get(i))
                             list

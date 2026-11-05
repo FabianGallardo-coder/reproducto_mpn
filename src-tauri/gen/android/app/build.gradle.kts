@@ -13,6 +13,12 @@ val tauriProperties = Properties().apply {
     }
 }
 
+val releaseSigningProperties = System.getenv("FLOWPLAYER_SIGNING_PROPERTIES")?.let { path ->
+    Properties().apply {
+        file(path).inputStream().use { load(it) }
+    }
+}
+
 android {
     compileSdk = 36
     namespace = "com.flowplayer.app"
@@ -23,6 +29,16 @@ android {
         targetSdk = 36
         versionCode = tauriProperties.getProperty("tauri.android.versionCode", "1").toInt()
         versionName = tauriProperties.getProperty("tauri.android.versionName", "1.0")
+    }
+    signingConfigs {
+        if (releaseSigningProperties != null) {
+            create("release") {
+                storeFile = file(requireNotNull(releaseSigningProperties.getProperty("storeFile")))
+                storePassword = requireNotNull(releaseSigningProperties.getProperty("storePassword"))
+                keyAlias = requireNotNull(releaseSigningProperties.getProperty("keyAlias"))
+                keyPassword = requireNotNull(releaseSigningProperties.getProperty("keyPassword"))
+            }
+        }
     }
     buildTypes {
         getByName("debug") {
@@ -37,6 +53,7 @@ android {
             }
         }
         getByName("release") {
+            signingConfig = signingConfigs.findByName("release")
             isMinifyEnabled = true
             proguardFiles(
                 *fileTree(".") { include("**/*.pro") }
@@ -51,6 +68,7 @@ android {
     buildFeatures {
         buildConfig = true
     }
+    sourceSets.getByName("main").assets.srcDir(rootProject.file("../../radio"))
 }
 
 rust {

@@ -99,6 +99,25 @@ describe("YouTube playback in the player store", () => {
     expect(player.playing).toBe(false);
   });
 
+  it("does not claim to play when Zen or Mini unmounted the embedded player", async () => {
+    await start();
+    act(() => player.registerYouTubeController(null));
+    await act(async () => { await player.pause(); });
+    await act(async () => { await player.resume(); });
+    expect(player.playing).toBe(false);
+    expect(player.error).toMatch(/modo Normal o Flow/);
+    expect(api.resume).not.toHaveBeenCalled();
+  });
+
+  it("moves to the next video without starting playback while the player is unmounted", async () => {
+    await start();
+    act(() => player.registerYouTubeController(null));
+    await act(async () => { await player.next(); });
+    expect(player.currentTrack?.path).toBe("youtube:9bZkp7q19f0");
+    expect(player.playing).toBe(false);
+    expect(player.error).toMatch(/modo Normal o Flow/);
+  });
+
   it("advances on ENDED only while autoplay is on", async () => {
     await start();
     act(() => player.youtubeEnded());

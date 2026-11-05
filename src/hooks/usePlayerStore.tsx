@@ -27,6 +27,10 @@ function isYouTubeTrack(track: Track | null): boolean {
   return track !== null && youtubeIdFromPath(track.path) !== null;
 }
 
+const YOUTUBE_HOST_MESSAGE = isAndroid
+  ? "YouTube solo se reproduce en el modo Normal. Volvé a ese modo para continuar."
+  : "YouTube solo se reproduce en el modo Normal o Flow. Volvé a uno de esos modos para continuar.";
+
 /**
  * Player state + actions, exposed via React Context to eliminate the
  * `App → AppLayout → PlayerBar` prop drilling.
@@ -275,6 +279,13 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     ytControllerRef.current = controller;
   }, []);
 
+  // The official player only exists in Normal and Flow; Zen and Mini unmount it, so nothing can play there.
+  const youtubeNeedsHost = useCallback((): boolean => {
+    if (!isYouTubeTrack(currentTrackRef.current) || ytControllerRef.current) return false;
+    setError(YOUTUBE_HOST_MESSAGE);
+    return true;
+  }, []);
+
   const stepYouTube = useCallback((direction: 1 | -1): boolean => {
     const list = queueRef.current;
     const index = list.findIndex((track) => track.path === currentTrackRef.current?.path);
@@ -282,9 +293,11 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     if (!target) return false;
     positionRef.current = 0;
     setPositionValue(0);
-    optimisticPlaying.current = true;
+    const canPlay = ytControllerRef.current !== null;
+    optimisticPlaying.current = canPlay;
     setCurrentTrack(target);
-    setPlaying(true);
+    setPlaying(canPlay);
+    if (!canPlay) setError(YOUTUBE_HOST_MESSAGE);
     return true;
   }, []);
 
@@ -379,6 +392,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const resume = useCallback(async () => {
+    if (youtubeNeedsHost()) return;
     optimisticPlaying.current = true;
     setPlaying(true);
     if (isYouTubeTrack(currentTrackRef.current)) {
@@ -386,7 +400,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       return;
     }
     await api.resume().catch(() => {});
-  }, []);
+  }, [youtubeNeedsHost]);
 
   const toggle = useCallback(async () => {
     if (playing) {

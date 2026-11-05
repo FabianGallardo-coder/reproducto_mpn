@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false" />
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">cdn.instream.audio</domain>
+        <domain includeSubdomains="false">ohradio.cc</domain>
+        <domain includeSubdomains="false">streaming.latina101.com.ar</domain>
+        <domain includeSubdomains="false">23.111.184.195</domain>
+        <domain includeSubdomains="false">live.lu5am.com</domain>
+        <domain includeSubdomains="false">s28.myradiostream.com</domain>
+    </domain-config>
+</network-security-config>

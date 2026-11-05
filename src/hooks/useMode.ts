@@ -1,16 +1,26 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, type SetStateAction } from "react";
 import type { Mode } from "../types";
-import { readStartMode } from "../lib/startMode";
+import { isModeAvailable, readStartMode } from "../lib/startMode";
 
 export function useMode() {
-  const [mode, setMode] = useState<Mode>(readStartMode);
+  const [mode, updateMode] = useState<Mode>(readStartMode);
+
+  const setMode = useCallback((next: SetStateAction<Mode>) => {
+    updateMode((current) => {
+      const requested = typeof next === "function" ? next(current) : next;
+      if (!isModeAvailable(requested)) {
+        console.warn(`Mode ${requested} is not available on this platform.`);
+        return current;
+      }
+      return requested;
+    });
+  }, []);
 
   const cycleMode = useCallback(() => {
-    setMode((prev) => {
-      if (prev === "normal") return "flow";
-      if (prev === "flow") return "zen";
-      if (prev === "zen") return "mini";
-      return "normal";
+    updateMode((prev) => {
+      const modes: Mode[] = ["normal", "flow", "zen", "mini"];
+      const available = modes.filter(isModeAvailable);
+      return available[(available.indexOf(prev) + 1) % available.length];
     });
   }, []);
 

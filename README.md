@@ -15,6 +15,12 @@ FlowPlayer reúne música local, radio por Internet y el reproductor oficial de 
 
 ![Biblioteca de FlowPlayer con archivos de prueba](docs/assets/library.png)
 
+## Descargar v0.1.1 candidata
+
+[Release y archivos de descarga](https://github.com/FabianGallardo-coder/reproducto_mpn/releases/tag/v0.1.1): instaladores **Windows x64** (EXE/MSI), APK **Android 8+ ARM64** release firmado y checksums SHA256.
+
+Es una **prerelease**, no una versión final estable. Windows requiere WebView2; sus instaladores no tienen firma Authenticode. El APK no puede actualizar una instalación debug con distinta firma: respaldá los datos importantes antes de desinstalarla.
+
 ## Qué podés hacer
 
 Las funciones siguientes describen la versión de escritorio. Android tiene un backend y un alcance propios, detallados más abajo.
@@ -23,7 +29,7 @@ Las funciones siguientes describen la versión de escritorio. Android tiene un b
 - Buscar en la biblioteca, en YouTube o entre las emisoras disponibles.
 - Reproducir YouTube en un video flotante o acoplado a **Reproduciendo**, con cola y autoplay.
 - Guardar descargas de material propio o autorizado y escucharlas sin conexión.
-- Escuchar radio, agregar emisoras y consultar letras cuando están disponibles.
+- Escuchar radio con 92 emisoras incluidas (SomaFM y listado argentino), agregar emisoras y consultar letras cuando están disponibles.
 - Consultar historial y estadísticas de 7 días, 30 días o todo el historial guardado.
 - Personalizar el acento y elegir el modo de inicio.
 
@@ -73,19 +79,19 @@ El servidor Vite por sí solo no reemplaza la app de escritorio: necesita el pue
 
 ## Android: adaptación de prueba
 
-El proyecto incluye una APK de desarrollo para **Android 8 o superior**; la compilación probada es **ARM64**, con firma debug. No se publica un binario ni una Release en esta actualización.
+La candidata **v0.1.1** incluye un APK release firmado para **Android 8 o superior**, solo **ARM64**, junto con instaladores Windows x64. Los paquetes se ofrecen como prerelease, no como versión final estable.
 
 | Función | Estado Android |
 |---|---|
 | Archivos locales | Selector nativo de carpetas/archivos con permisos persistentes y URI `content://`. Un audio ilegible se omite con aviso sin descartar los válidos. |
 | Reproducción | Motor Media3 con cola, pausa, seek, siguiente/anterior, aleatorio y repetición. Servicio multimedia para audio local y radio en segundo plano. |
 | Biblioteca | Favoritos, playlists, preferencias e historial locales. |
-| YouTube | Abrir enlaces desde Buscar; iframe oficial visible, flotante o acoplado. Se pausa al ocultar la app o entrar en Zen/Mini. |
+| YouTube | Abrir enlaces desde Buscar; iframe oficial visible, flotante o acoplado. Se pausa al ocultar la app o entrar en Zen. |
 | Búsqueda y descargas de YouTube | No disponibles. La búsqueda integrada requiere una futura integración con la API oficial. |
 | Letras y visualizador | No disponibles; la interfaz lo indica. |
-| Modos | Vistas dentro de la app; Mini no crea una ventana flotante sobre otras aplicaciones. Zen mantiene los controles táctiles visibles. |
+| Modos | Normal y Zen dentro de la app. Flow y Mini son exclusivos de escritorio. Zen mantiene los controles táctiles visibles. |
 
-Se revisó la APK en un TECNO BG7 con Android 13: selección de documentos, recuperación ante un audio dañado, capturas de páginas/paneles, teclado real y reproductor oficial de YouTube. Las regresiones de navegador verifican cuatro tamaños, incluido horizontal; no sustituyen pruebas en otros teléfonos. La certificación completa de notificación, audio focus, radio real, audibilidad e instalación de distribución sigue pendiente.
+Se revisó el APK en un teléfono Android real: selección de documentos, portadas, scroll táctil de Biblioteca, búsqueda de Mitre/Cadena 3, filtros y reproductor oficial de YouTube. El release firmado se instaló con autorización; el usuario confirmó reproducción audible y pausa/reanudación. Las regresiones de navegador verifican cuatro tamaños, incluido horizontal; no sustituyen pruebas en otros teléfonos. No se certifican todas las emisoras, notificaciones, audio focus ni pantalla bloqueada.
 
 Para compilar e instalar una APK propia, seguí [Desarrollo](docs/wiki/Desarrollo.md) y [Primeros pasos](docs/wiki/Primeros-pasos.md).
 

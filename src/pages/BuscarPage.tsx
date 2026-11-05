@@ -8,7 +8,7 @@ import { useNavigation } from "../hooks/useNavigation";
 import { useOnlineStatus } from "../hooks/useOnlineStatus";
 import { usePlayAnyTrack } from "../hooks/usePlayAnyTrack";
 import { usePlayerActions, usePlayerState } from "../hooks/usePlayerStore";
-import { youtubeItemTrack, type YouTubeItem } from "../types/youtube";
+import { classifyYouTubeInput, youtubeItemTrack, youtubeWatchUrl, type YouTubeItem } from "../types/youtube";
 import type { RadioStation, Track } from "../types";
 import type { PageProps } from "./pageTypes";
 import { isAndroid } from "../lib/platform";
@@ -42,6 +42,7 @@ export function BuscarPage({ controls }: PageProps) {
   const [query, setQuery] = useState((params.query ?? "").trim());
   const [scope, setScope] = useState<Scope>("todo");
   const [stations, setStations] = useState<RadioStation[]>([]);
+  const [radioError, setRadioError] = useState<string | null>(null);
   const [videos, setVideos] = useState<YouTubeItem[]>([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
@@ -56,7 +57,9 @@ export function BuscarPage({ controls }: PageProps) {
   }, [input]);
 
   useEffect(() => {
-    api.listRadioStations().then(setStations).catch(() => setStations([]));
+    api.listRadioStations().then(setStations).catch((error) => {
+      setRadioError(`No se pudieron cargar las emisoras: ${String(error)}`);
+    });
   }, []);
 
   const wantsVideos = !isAndroid && (scope === "todo" || scope === "youtube") && query.length >= MIN_QUERY && isOnline;
@@ -72,14 +75,26 @@ export function BuscarPage({ controls }: PageProps) {
     let cancelled = false;
     setSearching(true);
     setVideoError(null);
+    const link = classifyYouTubeInput(query);
+    if (link.kind === "invalid") {
+      setVideos([]);
+      setHasMore(false);
+      setSearching(false);
+      setVideoError("Pegá un enlace de video o playlist de YouTube.");
+      return;
+    }
     const timer = setTimeout(() => {
-      api
-        .youtubeSearch(query, 1)
+      const request = link.kind === "video"
+        ? api.youtubeInspect(youtubeWatchUrl(link.id) ?? query, false).then((collection) => collection.items)
+        : link.kind === "playlist"
+          ? api.youtubeInspect(link.url, true).then((collection) => collection.items.filter((item) => item.available))
+          : api.youtubeSearch(query, 1);
+      request
         .then((found) => {
           if (cancelled) return;
           setVideos(found);
           setPage(1);
-          setHasMore(found.length === 20);
+          setHasMore(link.kind === "text" && found.length === 20);
         })
         .catch((error) => {
           if (!cancelled) setVideoError(String(error));
@@ -165,12 +180,11 @@ export function BuscarPage({ controls }: PageProps) {
           <Chip key={entry.id} active={scope === entry.id} onClick={() => setScope(entry.id)}>{entry.label}</Chip>
         ))}
       </div>
-      {isAndroid && <MobileYouTubeLink />}
-
       {status && <p className="search__status" role="status">{status}</p>}
+      {showRadio && radioError && <p className="search__error" role="alert">{radioError}</p>}
       {!isOnline && showVideos && <p className="search__status" role="status">Sin conexión: solo se busca en tu biblioteca y emisoras.</p>}
 
-      {query.length < MIN_QUERY ? (
+      {isAndroid && scope === "youtube" ? null : query.length < MIN_QUERY ? (
         <EmptyState icon={<SearchIcon size={40} />} title="Buscá en toda tu música" description="Escribí al menos dos letras para ver resultados." />
       ) : (
         <>
@@ -194,7 +208,6 @@ export function BuscarPage({ controls }: PageProps) {
               ))}
             </Section>
           )}
-
           {showVideos && (visibleVideos.length > 0 || videoError) && (
             <Section
               id="youtube"
@@ -259,6 +272,7 @@ export function BuscarPage({ controls }: PageProps) {
           )}
         </>
       )}
+      {isAndroid && showVideos && <MobileYouTubeLink />}
     </Page>
   );
 }

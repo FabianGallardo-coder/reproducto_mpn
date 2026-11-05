@@ -32,6 +32,7 @@ vi.mock("../lib/api", () => ({
   api: {
     listRadioStations: vi.fn(),
     youtubeSearch: vi.fn(),
+    youtubeInspect: vi.fn(),
     youtubeEnqueue: vi.fn(),
   },
 }));
@@ -213,6 +214,48 @@ describe("BuscarPage", () => {
     expect(await screen.findByRole("alert", {}, { timeout: 3000 })).toHaveTextContent("Service unavailable");
     fireEvent.click(screen.getByRole("button", { name: "Local" }));
     expect(await screen.findByText("Sin resultados")).toBeInTheDocument();
+  });
+
+  it("inspects a pasted video link by its exact ID instead of searching for the URL", async () => {
+    vi.mocked(api.youtubeInspect).mockResolvedValue({
+      id: "L50II6zJy9U",
+      title: "For Narmer",
+      items: [{ id: "L50II6zJy9U", title: "For Narmer", artist: "PlayWarframe", duration: 219, available: true }],
+      playlist: false,
+    });
+    renderPage(<BuscarPage controls={controls} />);
+    search("https://www.youtube.com/watch?v=L50II6zJy9U&list=RDL50II6zJy9U&start_radio=1");
+    const youtube = await screen.findByRole("region", { name: "En YouTube" }, { timeout: 3000 });
+    expect(within(youtube).getByText("For Narmer")).toBeInTheDocument();
+    expect(api.youtubeInspect).toHaveBeenCalledWith("https://www.youtube.com/watch?v=L50II6zJy9U", false);
+    expect(api.youtubeSearch).not.toHaveBeenCalled();
+  });
+
+  it("lists only the available videos of a pasted playlist link", async () => {
+    vi.mocked(api.youtubeInspect).mockResolvedValue({
+      id: "PLabc123",
+      title: "Mix",
+      items: [
+        { id: "dQw4w9WgXcQ", title: "Song A", artist: "A", duration: 100, available: true },
+        { id: "unavailable-1", title: "Unavailable playlist entry", artist: "YouTube", duration: 0, available: false },
+      ],
+      playlist: true,
+    });
+    renderPage(<BuscarPage controls={controls} />);
+    search("https://www.youtube.com/playlist?list=PLabc123");
+    const youtube = await screen.findByRole("region", { name: "En YouTube" }, { timeout: 3000 });
+    expect(within(youtube).getByText("Song A")).toBeInTheDocument();
+    expect(within(youtube).queryByText("Unavailable playlist entry")).not.toBeInTheDocument();
+    expect(api.youtubeInspect).toHaveBeenCalledWith("https://www.youtube.com/playlist?list=PLabc123", true);
+    expect(api.youtubeSearch).not.toHaveBeenCalled();
+  });
+
+  it("rejects links that are not YouTube videos or playlists without searching for them", async () => {
+    renderPage(<BuscarPage controls={controls} />);
+    search("https://example.com/watch?v=dQw4w9WgXcQ");
+    expect(await screen.findByRole("alert")).toHaveTextContent("Pegá un enlace de video o playlist de YouTube.");
+    expect(api.youtubeSearch).not.toHaveBeenCalled();
+    expect(api.youtubeInspect).not.toHaveBeenCalled();
   });
 });
 

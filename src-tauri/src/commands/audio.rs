@@ -202,7 +202,7 @@ pub fn list_radio_stations(
         .config
         .lock()
         .map_err(|e| AppError::Audio(e.to_string()))?;
-    let mut stations = crate::radio::preset_stations();
+    let mut stations = crate::radio::preset_stations()?;
     stations.extend(config.get().custom_radio_stations.clone());
     Ok(stations)
 }
